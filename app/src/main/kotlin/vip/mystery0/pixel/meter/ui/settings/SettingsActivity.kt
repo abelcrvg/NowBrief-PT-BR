@@ -36,7 +36,7 @@ import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowVoltar
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
@@ -83,12 +83,12 @@ import me.zhanghai.compose.preference.TextFieldPreference
 import me.zhanghai.compose.preference.TwoTargetPreference
 import com.kakao.taxi.BuildConfig
 import com.kakao.taxi.R
-import com.kakao.taxi.LocalGlassVoltardrop
+import com.kakao.taxi.LocalGlassBackdrop
 import com.kakao.taxi.data.repository.NetworkRepository
 import com.kakao.taxi.ui.theme.PixelPulseTheme
-import com.kyant.backdrop.Voltardrop
-import com.kyant.backdrop.backdrops.layerVoltardrop
-import com.kyant.backdrop.backdrops.rememberLayerVoltardrop
+import com.kyant.backdrop.Backdrop
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.kyant.backdrop.catalog.components.LiquidButton
 import com.kyant.backdrop.catalog.components.LiquidSlider
 import com.kyant.backdrop.catalog.components.LiquidToggle
@@ -124,26 +124,26 @@ class SettingsActivity : ComponentActivity() {
         }
 
         // Real captured backdrop for this screen — same mechanism as NowBriefActivity's
-        // rootVoltardrop. Every LiquidToggle / LiquidButton / LiquidSlider below samples
+        // rootBackdrop. Every LiquidToggle / LiquidButton / LiquidSlider below samples
         // this directly for genuine blur + lens refraction of whatever sits behind it.
-        val settingsVoltardrop = rememberLayerVoltardrop()
+        val settingsBackdrop = rememberLayerBackdrop()
 
         Box(Modifier.fillMaxSize()) {
             Box(
                 Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
-                    .layerVoltardrop(settingsVoltardrop)
+                    .layerBackdrop(settingsBackdrop)
             )
 
-            CompositionLocalProvider(LocalGlassVoltardrop provides settingsVoltardrop) {
+            CompositionLocalProvider(LocalGlassBackdrop provides settingsBackdrop) {
                 Scaffold(
                     topBar = {
                         TopAppBar(
                             title = { Text(stringResource(R.string.title_settings)) },
                             navigationIcon = {
                                 IconButton(onClick = { finish() }) {
-                                    Icon(Icons.AutoMirrored.Filled.ArrowVoltar, contentDescription = "Voltar")
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                                 }
                             },
                             colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
@@ -164,7 +164,7 @@ class SettingsActivity : ComponentActivity() {
                             item { HealthSourceSection(viewModel) }
                             item { NotificationSection(viewModel) }
                             item { OverlaySection(viewModel) }
-                            item { VoltargroundSection(viewModel) }
+                            item { BackgroundSection(viewModel) }
                             item { AboutSection() }
                             item {
                                 Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
@@ -180,7 +180,7 @@ class SettingsActivity : ComponentActivity() {
 // ─── Liquid-glass drop-in replacement for SwitchPreference's Switch widget ────
 // Same layout (title/icon/summary row from me.zhanghai.compose.preference's
 // Preference) but the trailing toggle is the real upstream LiquidToggle,
-// sampling this screen's captured Voltardrop for genuine refraction.
+// sampling this screen's captured Backdrop for genuine refraction.
 @Composable
 fun LiquidSwitchPreference(
     value: Boolean,
@@ -191,7 +191,7 @@ fun LiquidSwitchPreference(
     icon: @Composable (() -> Unit)? = null,
     summary: @Composable (() -> Unit)? = null,
 ) {
-    val backdrop = LocalGlassVoltardrop.current
+    val backdrop = LocalGlassBackdrop.current
     Preference(
         title = title,
         modifier = if (backdrop != null) modifier
@@ -239,7 +239,7 @@ fun LiquidSliderPreference(
     summary: @Composable (() -> Unit)? = null,
     valueText: @Composable (() -> Unit)? = null,
 ) {
-    val backdrop = LocalGlassVoltardrop.current
+    val backdrop = LocalGlassBackdrop.current
     Preference(
         title = title,
         modifier = modifier,
@@ -293,16 +293,16 @@ fun HealthSourceSection(viewModel: SettingsViewModel) {
     LaunchedEffect(Unit) { diagnostics = aggregator.diagnostics() }
 
     val options = listOf(
-        "auto" to "Automático (recomendado)",
+        "auto" to "Auto (Recommended)",
         "health_connect" to "Health Connect",
-        "device_sensors" to "Sensores do dispositivo",
+        "device_sensors" to "Device Sensors",
     )
 
-    PreferenceCategory(title = { Text("Fonte de dados de saúde") })
+    PreferenceCategory(title = { Text("Health Data Source") })
 
     Preference(
-        title = { Text("Fonte de saúde") },
-        summary = { Text(options.firstOrNull { it.first == mode }?.second ?: "Automático (recomendado)") },
+        title = { Text("Health source") },
+        summary = { Text(options.firstOrNull { it.first == mode }?.second ?: "Auto (Recommended)") },
         onClick = {
             view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
             showDialog = true
@@ -311,12 +311,12 @@ fun HealthSourceSection(viewModel: SettingsViewModel) {
 
     diagnostics?.let { d ->
         Preference(
-            title = { Text("Fonte ativa: ${d.activeSourceLabel}") },
+            title = { Text("Active source: ${d.activeSourceLabel}") },
             summary = {
                 Column {
-                    Text("Health Connect: ${if (d.healthConnectAvailable) "disponível" else "undisponível"} · permissions: ${if (d.permissionsGranted) "concedidas" else "not concedidas"}")
-                    Text("Passos: ${if (d.stepRecordsAvailable) "yes" else "no"} · Sono: ${if (d.sleepRecordsAvailable) "yes" else "no"} · Frequência cardíaca: ${if (d.heartRateRecordsAvailable) "yes" else "no"}")
-                    Text("Samsung Health instalado: ${if (d.samsungHealthInstalled) "sim" else "não"} · Google Fit instalado: ${if (d.googleFitInstalled) "sim" else "não"}")
+                    Text("Health Connect: ${if (d.healthConnectAvailable) "available" else "unavailable"} · permissions: ${if (d.permissionsGranted) "granted" else "not granted"}")
+                    Text("Steps: ${if (d.stepRecordsAvailable) "yes" else "no"} · Sleep: ${if (d.sleepRecordsAvailable) "yes" else "no"} · Heart rate: ${if (d.heartRateRecordsAvailable) "yes" else "no"}")
+                    Text("Samsung Health installed: ${if (d.samsungHealthInstalled) "yes" else "no"} · Google Fit installed: ${if (d.googleFitInstalled) "yes" else "no"}")
                     d.message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 }
             },
@@ -330,12 +330,12 @@ fun HealthSourceSection(viewModel: SettingsViewModel) {
         TextButton(onClick = {
             try { context.startActivity(com.kakao.taxi.data.repository.HealthAggregator.openHealthConnectIntent()) }
             catch (_: Exception) {}
-        }) { Text("Abrir Health Connect") }
+        }) { Text("Open Health Connect") }
 
         TextButton(onClick = {
             try { context.startActivity(com.kakao.taxi.data.repository.HealthAggregator.openSamsungHealthIntent()) }
             catch (_: Exception) {}
-        }) { Text("Abrir Samsung Health") }
+        }) { Text("Open Samsung Health") }
 
         TextButton(onClick = {
             try { context.startActivity(com.kakao.taxi.data.repository.HealthAggregator.openGoogleFitIntent()) }
@@ -503,7 +503,7 @@ fun GeneralSection(viewModel: SettingsViewModel) {
 
     // Permission Indicators
     val overlayPermissionSummary = if (hasOverlayPermission) {
-        stringResource(R.string.settings_permission_concedidas)
+        stringResource(R.string.settings_permission_granted)
     } else {
         stringResource(R.string.settings_permission_denied)
     }
@@ -519,7 +519,7 @@ fun GeneralSection(viewModel: SettingsViewModel) {
     )
 
     val notificationPermissionSummary = if (hasNotificationPermission) {
-        stringResource(R.string.settings_permission_concedidas)
+        stringResource(R.string.settings_permission_granted)
     } else {
         stringResource(R.string.settings_permission_denied)
     }
@@ -618,7 +618,7 @@ fun SpeedUnitPreference(
 }
 
 @Composable
-fun VoltargroundSection(viewModel: SettingsViewModel) {
+fun BackgroundSection(viewModel: SettingsViewModel) {
     val view = LocalView.current
     val context = LocalContext.current
     val isIgnoringBatteryOptimizations by viewModel.isIgnoringBatteryOptimizations.collectAsState()
@@ -1059,7 +1059,7 @@ fun NotificationSection(viewModel: SettingsViewModel) {
 fun AboutSection() {
     val view = LocalView.current
     val uriHandler = LocalUriHandler.current
-    val backdrop = LocalGlassVoltardrop.current
+    val backdrop = LocalGlassBackdrop.current
     PreferenceCategory(title = { Text(stringResource(R.string.settings_category_about)) })
     Preference(
         title = { Text(stringResource(R.string.settings_app_version)) },
