@@ -12,7 +12,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.net.Uri
 import android.os.Bundle
-import android.provider.Configurações
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -1599,13 +1599,13 @@ fun ClimaTab(weather: ClimaData, isCarregando: Boolean) {
             Column(horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.padding(32.dp)) {
                 Text("\uD83C\uDF24\uFE0F", fontSize = 56.sp)
-                Text("Clima Unavailable", fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
+                Text("Clima indisponível", fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface)
                 Text("Não foi possível obter sua localização. Conceda a permissão de localização.",
                     fontSize = 13.sp, textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 19.sp)
                 Button(onClick = {
-                    try { context.startActivity(android.content.Intent(android.provider.Configurações.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    try { context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                         android.net.Uri.fromParts("package", context.packageName, null))) } catch (_: Exception) {}
                 }) { Text("Abrir configurações") }
             }
@@ -1741,11 +1741,11 @@ fun ClimaGrid(weather: ClimaData) {
 }
 
 fun uvLabel(uv: Int) = when {
-    uv <= 2  -> "$uv \u00b7 Low"
-    uv <= 5  -> "$uv \u00b7 Moderate"
-    uv <= 7  -> "$uv \u00b7 High"
-    uv <= 10 -> "$uv \u00b7 Very High"
-    else     -> "$uv \u00b7 Extreme"
+    uv <= 2  -> "$uv \u00b7 Baixo"
+    uv <= 5  -> "$uv \u00b7 Moderado"
+    uv <= 7  -> "$uv \u00b7 Alto"
+    uv <= 10 -> "$uv \u00b7 Muito alto"
+    else     -> "$uv \u00b7 Extremo"
 }
 
 // ─── TAB 3: NEWS ──────────────────────────────────────────────────────
@@ -2231,43 +2231,43 @@ fun buildClimaInsight(weather: com.kakao.taxi.data.model.ClimaData): String {
     sb.append(when {
         temp >= 38 -> "🥵 Dangerously hot — stay indoors and hydrate heavily."
         temp >= 32 -> "☀️ Very hot today. Limit outdoor activity, especially midday."
-        temp >= 26 -> "😎 Warm and pleasant. Good for outdoor activities with sunscreen."
+        temp >= 26 -> "😎 Tempo quente e agradável. Bom para atividades ao ar livre com protetor solar."
         temp >= 18 -> "🌤️ Comfortable temperature today."
-        temp >= 10 -> "🧥 Cool out there — a light jacket is recommended."
-        temp >= 0  -> "🥶 Cold day. Dress in warm layers."
-        else       -> "❄️ Freezing conditions — minimize outdoor exposure."
+        temp >= 10 -> "🧥 Está fresco — recomenda-se uma jaqueta leve."
+        temp >= 0  -> "🥶 Dia frio. Use roupas em camadas para se aquecer."
+        else       -> "❄️ Temperaturas congelantes — evite ficar ao ar livre."
     })
 
     // Feels-like gap
     if (kotlin.math.abs(feels - temp) >= 4) {
-        sb.append(" Feels ${if (feels < temp) "$feels°C with wind chill" else "$feels°C due to humidity"}.")
+        sb.append(" Sensação térmica de ${if (feels < temp) "$feels°C por causa do vento" else "$feels°C por causa da umidade"}.")
     }
 
     // Chuva advice
-    if (rain >= 70) sb.append(" 🌧️ High rain chance ($rain%) — carry an umbrella.")
-    else if (rain >= 40) sb.append(" 🌦️ Possible showers ($rain%) — keep an umbrella handy.")
+    if (rain >= 70) sb.append(" 🌧️ Alta chance de chuva ($rain%) — leve um guarda-chuva.")
+    else if (rain >= 40) sb.append(" 🌦️ Pode chover ($rain%) — deixe um guarda-chuva à mão.")
 
     // UV advice
     if (hour in 9..17) {
         when {
-            uv >= 8 -> sb.append(" ⚠️ Very high UV ($uv) — wear SPF 50+, hat, and sunglasses.")
-            uv >= 6 -> sb.append(" 🕶️ High UV ($uv) — sunscreen recommended.")
-            uv >= 3 -> sb.append(" 🌞 Moderate UV — sunscreen if outdoors for long.")
+            uv >= 8 -> sb.append(" ⚠️ Índice UV muito alto ($uv) — use FPS 50+, chapéu e óculos escuros.")
+            uv >= 6 -> sb.append(" 🕶️ Índice UV alto ($uv) — recomenda-se protetor solar.")
+            uv >= 3 -> sb.append(" 🌞 Índice UV moderado — use protetor solar se ficar muito tempo ao ar livre.")
         }
     }
 
     // Vento advice
-    if (wind >= 50) sb.append(" 💨 Strong winds ($wind km/h) — secure loose items.")
-    else if (wind >= 30) sb.append(" 🍃 Breezy ($wind km/h) — good for a walk.")
+    if (wind >= 50) sb.append(" 💨 Ventos fortes ($wind km/h) — prenda objetos soltos.")
+    else if (wind >= 30) sb.append(" 🍃 Brisa agradável ($wind km/h) — bom para caminhar.")
 
     // Umidade comfort
-    if (humid >= 80 && temp >= 25) sb.append(" 💧 High humidity makes it feel muggy — stay hydrated.")
-    else if (humid < 30) sb.append(" 🏜️ Low humidity — use moisturiser and drink extra water.")
+    if (humid >= 80 && temp >= 25) sb.append(" 💧 A umidade alta aumenta a sensação de abafamento — beba água.")
+    else if (humid < 30) sb.append(" 🏜️ A umidade está baixa — hidrate a pele e beba mais água.")
 
     // Condition-specific
     when {
-        "fog" in cond || "mist" in cond -> sb.append(" 🌫️ Foggy conditions — drive slowly and use fog lights.")
-        "snow" in cond || "blizzard" in cond -> sb.append(" ❄️ Snowy — roads may be slippery.")
+        "fog" in cond || "mist" in cond -> sb.append(" 🌫️ Neblina — dirija devagar e use os faróis de neblina.")
+        "snow" in cond || "blizzard" in cond -> sb.append(" ❄️ Neve — as pistas podem estar escorregadias.")
         "thunder" in cond || "storm" in cond -> sb.append(" ⚡ Alerta de tempestade — evite áreas abertas.")
         "clear" in cond && hour in 18..22 -> sb.append(" 🌠 A noite promete céu limpo — ótima para observar as estrelas!")
     }
@@ -3105,27 +3105,27 @@ fun SaúdeTab() {
         val nightOptions = listOf(6f, 6.5f, 7f, 7.5f, 8f, 8.5f, 9f)
         val napOptions   = listOf(0.5f, 1f, 1.5f, 2f, 2.5f, 3f)
         val behaviorOptions = listOf(
-            "📵 Turn off mobile data",
-            "✈️ Enable airplane mode",
-            "🔕 Enable DND / silent",
-            "🌙 Enable dark mode",
-            "🔇 Mute all notifications",
-            "🔋 Plug in charger",
-            "📴 Turn off WiFi",
-            "📴 Turn off screen"
+            "📵 Desativar dados móveis",
+            "✈️ Ativar modo avião",
+            "🔕 Ativar Não Perturbe / silencioso",
+            "🌙 Ativar modo escuro",
+            "🔇 Silenciar todas as notificações",
+            "🔋 Conectar o carregador",
+            "📴 Desativar o Wi-Fi",
+            "📴 Apagar a tela"
         )
         // "None" sentinel — user explicitly declares no specific behavior
         val NONE_SENTINEL = "__none__"
 
         val stepTitle = when (sleepOnboardStep) {
-            0    -> "Noite Sono Goal"
-            1    -> "Nap Goal"
-            else -> "Sono Habits"
+            0    -> "Meta de sono noturno"
+            1    -> "Meta de soneca"
+            else -> "Hábitos de sono"
         }
         val stepSubtitle = when (sleepOnboardStep) {
-            0    -> "How many hours of night sleep do you aim for?"
+            0    -> "Quantas horas de sono noturno você pretende dormir?"
             1    -> "Qual é a duração ideal da sua soneca durante o dia?"
-            else -> "What do you usually do before sleeping?"
+            else -> "O que você costuma fazer antes de dormir?"
         }
 
         AlertDialog(
@@ -3331,16 +3331,16 @@ fun SaúdeTab() {
             val stepStatus = when {
                 !hasActivity              -> null
                 stepCount <= 0            -> null
-                stepCount >= 8000         -> "\uD83C\uDFC3 Goal crushed! $stepCount steps today."
-                stepCount >= 5000         -> "\uD83D\uDC5F $stepCount steps — keep going, almost there!"
-                else                      -> "\uD83D\uDC5F $stepCount steps so far. Try a short walk."
+                stepCount >= 8000         -> "\uD83C\uDFC3 Meta alcançada! $stepCount passos hoje."
+                stepCount >= 5000         -> "\uD83D\uDC5F $stepCount passos — continue, está quase lá!"
+                else                      -> "\uD83D\uDC5F $stepCount passos até agora. Que tal uma caminhada curta?"
             }
             val screenStatus = when {
                 !hasUsage                 -> null
                 totalScreenMin == 0L      -> null
-                totalScreenMin > 240      -> "\uD83D\uDCF1 ${totalScreenMin/60}h ${totalScreenMin%60}m screen — take breaks!"
-                totalScreenMin > 120      -> "\uD83D\uDCF1 ${totalScreenMin/60}h ${totalScreenMin%60}m screen time today."
-                else                      -> "\uD83D\uDCF1 ${totalScreenMin}m screen — looking good."
+                totalScreenMin > 240      -> "\uD83D\uDCF1 ${totalScreenMin/60}h ${totalScreenMin%60}min de tela — faça pausas!"
+                totalScreenMin > 120      -> "\uD83D\uDCF1 ${totalScreenMin/60}h ${totalScreenMin%60}min de tela hoje."
+                else                      -> "\uD83D\uDCF1 ${totalScreenMin}min de tela — bom trabalho."
             }
             val insights = listOfNotNull(stepStatus, screenStatus)
             if (insights.isNotEmpty()) LiquidGlassCard(modifier = Modifier.fillMaxWidth()) {
@@ -3607,7 +3607,7 @@ fun SaúdeTab() {
                                     letterSpacing = 0.8.sp, color = MaterialTheme.colorScheme.primary)
                             }
                             val totalH = totalScreenMin / 60; val totalM = totalScreenMin % 60
-                            Text(if (totalH > 0) "${totalH}h ${totalM}m total" else "${totalM}m total",
+                            Text(if (totalH > 0) "${totalH}h ${totalM}min no total" else "${totalM}min no total",
                                 fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.7f))
                         }
                         val maxMin = topApps.maxOfOrNull { it.minutesUsed } ?: 1L
@@ -3661,11 +3661,11 @@ fun SaúdeTab() {
                 else                  -> Color(0xFFFFA726)
             }
             val hcStatusText = when {
-                hcRepo.needsUpdate    -> "Needs update"
+                hcRepo.needsUpdate    -> "Precisa atualizar"
                 !hcAvailable          -> "Não disponível neste dispositivo"
-                hcSnap != null        -> "Connected ✓"
+                hcSnap != null        -> "Conectado ✓"
                 hcEverGranted         -> "Conectado ✓ — atualizando…"
-                else                  -> "Not connected"
+                else                  -> "Não conectado"
             }
 
             @Composable
@@ -3700,14 +3700,14 @@ fun SaúdeTab() {
                                     val intent = android.content.Intent(android.content.Intent.ACTION_VIEW,
                                         android.net.Uri.parse("market://details?id=com.google.android.apps.healthdata"))
                                     context.startActivity(intent)
-                                }) { Text("Update", fontSize = 12.sp) }
+                                }) { Text("Atualizar", fontSize = 12.sp) }
                             }
                         } else if (hcSnap == null && !hcEverGranted) {
                             var hcBlocked by remember { mutableStateOf(false) }
                             TextButton(onClick = {
                                 try { hcPermLauncher.launch(hcRepo.requiredPermissions) }
                                 catch (_: Exception) { hcBlocked = true }
-                            }) { Text("Connect", fontSize = 12.sp) }
+                            }) { Text("Conectar", fontSize = 12.sp) }
                         } else {
                             TextButton(onClick = {
                                 coroutineScope.launch {
