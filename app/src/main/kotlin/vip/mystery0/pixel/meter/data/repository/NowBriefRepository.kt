@@ -156,7 +156,7 @@ class NowBriefRepository(
     private val quotePool = listOf(
         // Motivation & success
         "The best way to predict the future is to create it. — Abraham Lincoln",
-        "It always seems impossible until it's done. — Nelson Mandela",
+        "Tudo parece impossível até ser feito. — Nelson Mandela",
         "Do what you can, with what you have, where you are. — Theodore Roosevelt",
         "In the middle of difficulty lies opportunity. — Albert Einstein",
         "The journey of a thousand miles begins with one step. — Lao Tzu",
@@ -167,9 +167,9 @@ class NowBriefRepository(
         "Simplicity is the ultimate sophistication. — Leonardo da Vinci",
         "Stay hungry, stay foolish. — Steve Jobs",
         "Be yourself; everyone else is already taken. — Oscar Wilde",
-        "I have not failed. I've just found 10,000 ways that won't work. — Thomas Edison",
+        "Eu não fracassei. Apenas encontrei 10 mil maneiras que não funcionam. — Thomas Edison",
         "You only live once, but if you do it right, once is enough. — Mae West",
-        "Live as if you were to die tomorrow. Learn as if you were to live forever. — Mahatma Gandhi",
+        "Viva como se fosse morrer amanhã. Aprenda como se fosse viver para sempre. — Mahatma Gandhi",
         "Without music, life would be a mistake. — Friedrich Nietzsche",
         "The secret of getting ahead is getting started. — Mark Twain",
         "It does not matter how slowly you go as long as you do not stop. — Confucius",
@@ -178,24 +178,24 @@ class NowBriefRepository(
         "Dream big and dare to fail. — Norman Vaughan",
         "You must be the change you wish to see in the world. — Mahatma Gandhi",
         "When we strive to become better than we are, everything around us becomes better too. — Paulo Coelho",
-        "Happiness is not something ready made. It comes from your own actions. — Dalai Lama",
+        "A felicidade não vem pronta. Ela nasce das suas próprias ações. — Dalai Lama",
         "It is during our darkest moments that we must focus to see the light. — Aristotle",
         "Try to be a rainbow in someone's cloud. — Maya Angelou",
-        "Do not go where the path may lead; go instead where there is no path and leave a trail. — Ralph Waldo Emerson",
+        "Não siga por onde o caminho leva; vá onde não há caminho e deixe sua marca. — Ralph Waldo Emerson",
         "Not how long, but how well you have lived is the main thing. — Seneca",
-        "Your time is limited, so don't waste it living someone else's life. — Steve Jobs",
+        "Seu tempo é limitado; não o desperdice vivendo a vida de outra pessoa. — Steve Jobs",
         "Get busy living or get busy dying. — Stephen King",
         // Wisdom & philosophy
         "Knowing yourself is the beginning of all wisdom. — Aristotle",
         "The unexamined life is not worth living. — Socrates",
         "We are what we repeatedly do. Excellence is not an act, but a habit. — Aristotle",
-        "Count your age by friends, not years. Count your life by smiles, not tears. — John Lennon",
+        "Conte sua idade pelos amigos, não pelos anos. Conte sua vida pelos sorrisos, não pelas lágrimas. — John Lennon",
         "In three words I can sum up everything I've learned about life: it goes on. — Robert Frost",
-        "No act of kindness, no matter how small, is ever wasted. — Aesop",
+        "Nenhum gesto de bondade, por menor que seja, é desperdiçado. — Esopo",
         "To live is the rarest thing in the world. Most people exist, that is all. — Oscar Wilde",
-        "Yesterday is history, tomorrow is a mystery, today is a gift — that's why it's called the present. — Eleanor Roosevelt",
+        "Ontem é história, amanhã é mistério e hoje é um presente — por isso se chama presente. — Eleanor Roosevelt",
         "A friend is someone who knows all about you and still loves you. — Elbert Hubbard",
-        "To handle yourself, use your head; to handle others, use your heart. — Eleanor Roosevelt",
+        "Para lidar consigo, use a cabeça; para lidar com os outros, use o coração. — Eleanor Roosevelt",
         // Perseverance
         "Fall seven times, stand up eight. — Japanese Proverb",
         "Hard times never last, but hard people do. — Robert H. Schuller",
@@ -215,7 +215,7 @@ class NowBriefRepository(
         "Logic will get you from A to B. Imagination will take you everywhere. — Albert Einstein",
         "The greatest discovery of all time is that a person can change his future by merely changing his attitude. — Oprah Winfrey",
         "Once you stop learning, you start dying. — Albert Einstein",
-        "The beautiful thing about learning is that no one can take it away from you. — B.B. King",
+        "A beleza do aprendizado é que ninguém pode tirá-lo de você. — B.B. King",
         // Courage & action
         "Courage is not the absence of fear, but the triumph over it. — Nelson Mandela",
         "It takes courage to grow up and become who you really are. — E.E. Cummings",
@@ -233,18 +233,18 @@ class NowBriefRepository(
         "Happiness is not a destination, it is a way of life. — Burton Hills",
         "The happiest people don't have the best of everything, they make the best of everything. — Anonymous",
         "Joy is not in things; it is in us. — Richard Wagner",
-        "Be happy for this moment. This moment is your life. — Omar Khayyam",
+        "Seja feliz neste momento. Este momento é a sua vida. — Omar Khayyam",
         // Indian wisdom
         "Strength does not come from physical capacity. It comes from an indomitable will. — Mahatma Gandhi",
-        "You have power over your mind — not outside events. Realize this, and you will find strength. — Marcus Aurelius",
+        "Você tem poder sobre sua mente, não sobre os acontecimentos externos. Perceba isso e encontrará força. — Marco Aurélio",
         "First they ignore you, then they laugh at you, then they fight you, then you win. — Mahatma Gandhi",
         "A man is but the product of his thoughts. What he thinks, he becomes. — Mahatma Gandhi",
         "The best way to find yourself is to lose yourself in the service of others. — Mahatma Gandhi",
         "Arise, awake, and stop not until the goal is achieved. — Swami Vivekananda",
-        "Take up one idea. Make that one idea your life. — Swami Vivekananda",
+        "Escolha uma ideia e faça dela o propósito da sua vida. — Swami Vivekananda",
         "Talk to yourself once in a day, otherwise you may miss meeting an excellent person. — Swami Vivekananda",
         "In a gentle way, you can shake the world. — Mahatma Gandhi",
-        "The future depends on what you do today. — Mahatma Gandhi",
+        "O futuro depende do que você faz hoje. — Mahatma Gandhi",
         // Tech & modern
         "Move fast and break things. — Mark Zuckerberg",
         "Make something people want. — Paul Graham",
@@ -259,7 +259,7 @@ class NowBriefRepository(
         "Think different. — Apple",
         "Less is more. — Ludwig Mies van der Rohe",
         "Progress, not perfection. — Anonymous",
-        "Done is better than perfect. — Sheryl Sandberg",
+        "Feito é melhor do que perfeito. — Sheryl Sandberg",
         "Work hard, be kind, and amazing things will happen. — Conan O'Brien",
         "Act as if what you do makes a difference. It does. — William James",
         "Nothing is impossible. The word itself says 'I'm possible.' — Audrey Hepburn",
@@ -353,7 +353,7 @@ Respond ONLY with valid JSON (no markdown):
   "musicTitle": "A real song title different from last time",
   "musicArtist": "Artist name",
   "musicMoodTags": ["mood1", "mood2"],
-  "musicReason": "Max 8 words why"
+  "musicReason": "Motivo em português com no máximo 8 palavras"
 }
 """.trimIndent()
 
@@ -1042,27 +1042,27 @@ Valid categories: World Technology Business Sports Science Health Entertainment 
             val newsTitles = news.take(5).mapIndexed { i, a -> "${i+1}. ${a.title}" }.joinToString("\n")
 
             val prompt = """
-You are NowBrief, a warm friendly AI embedded in a Samsung Now Bar.
-Today: $today ($timeOfDay, hour: $hour)
-Weather: ${weather.condition}, ${weather.temperature.toInt()}°C feels like ${weather.feelsLike.toInt()}°C, rain ${weather.rainChance}%, UV ${weather.uvIndex}
-City: ${weather.cityName}
-Top headlines:
+Você é o NowBrief, uma IA acolhedora integrada à Now Bar da Samsung. Responda sempre em português brasileiro.
+Data de hoje: $today (período: $timeOfDay, hora: $hour)
+Clima: ${weather.condition}, ${weather.temperature.toInt()}°C, sensação térmica de ${weather.feelsLike.toInt()}°C, chance de chuva ${weather.rainChance}%, índice UV ${weather.uvIndex}
+Cidade: ${weather.cityName}
+Principais manchetes:
 $newsTitles
 
-Respond ONLY with a valid JSON object (no markdown, no backticks). Fill EVERY field:
+Responda SOMENTE com um objeto JSON válido (sem Markdown ou crases). Preencha TODOS os campos e escreva os textos em português brasileiro:
 {
-  "greeting": "Warm $timeOfDay greeting 2-4 words e.g. 'Good morning'",
+  "greeting": "Saudação acolhedora para este período do dia, com 2 a 4 palavras, por exemplo 'Bom dia'",
   "newsSummary": "Exatamente 2 frases em português brasileiro resumindo as 2 manchetes mais importantes acima. Cite os acontecimentos específicos.",
   "daySummary": "Exatamente 2 frases acolhedoras e úteis em português brasileiro para este período do dia, considerando o clima e o horário.",
   "weatherSummary": "Uma frase natural em português brasileiro sobre o clima de hoje.",
   "weatherAdvice": "Uma frase prática em português brasileiro dizendo o que vestir ou levar hoje.",
-  "quote": "Inspiring quote — Attribution",
+  "quote": "Citação inspiradora em português — autoria",
   "tips": ["Dica relacionada ao clima", "Dica de saúde ou concentração", "Dica para a noite ou para o período do dia"],
-  "musicMood": "one word",
+  "musicMood": "uma palavra em português",
   "musicTitle": "Real song title fitting $timeOfDay mood",
   "musicArtist": "Artist name",
-  "musicMoodTags": ["tag1", "tag2"],
-  "musicReason": "Max 8 words why"
+  "musicMoodTags": ["etiqueta 1 em português", "etiqueta 2 em português"],
+  "musicReason": "Motivo em português com no máximo 8 palavras"
 }
 """.trimIndent()
 

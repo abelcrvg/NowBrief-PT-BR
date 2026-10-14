@@ -2,18 +2,16 @@
 
 Versão comunitária em português brasileiro do aplicativo **NowBrief**, baseada no projeto original de [MukulBolt9/xz](https://github.com/MukulBolt9/xz).
 
-## Objetivo
-Traduzir a interface, configurações, notificações e conteúdos apresentados ao usuário para português brasileiro, preservando a arquitetura e os créditos do projeto original.
+## O que foi localizado
+- Interface principal, configurações, notificações e textos de status.
+- Telas de clima, notícias, saúde, hidratação e sono.
+- Mensagens de erro, dicas, textos de orientação e conteúdo gerado pela IA.
+- Prompt do resumo diário configurado para produzir respostas em português brasileiro.
 
-## Estado da tradução
-- Recursos Android em `app/src/main/res/values/strings.xml`: tradução inicial de textos comuns.
-- Próxima etapa: localizar textos escritos diretamente no Kotlin, adaptar os prompts de IA e verificar conteúdo de notícias.
-- A tradução da interface não garante, por si só, que todas as respostas da IA ou fontes de notícias estejam em português.
-
-## Compilação
-O projeto é um aplicativo Android desenvolvido em Kotlin e Jetpack Compose. Requer o ambiente Android/Gradle compatível com as configurações do projeto.
+## Compilação e APK
+O projeto usa Kotlin, Jetpack Compose e Gradle. O GitHub Actions executa `assembleDebug` a cada atualização e disponibiliza o APK de depuração como artefato da execução quando a compilação passa. Acompanhe em [Actions](https://github.com/abelcrvg/NowBrief-PT-BR/actions).
 
 ## Créditos e licença
-O código deriva do projeto original de MukulBolt9 e mantém a licença Apache 2.0. Consulte `LICENSE` para os termos completos. Marcas, bibliotecas e créditos de terceiros permanecem pertencentes aos seus respectivos autores.
+O código deriva do projeto original de MukulBolt9 e mantém a licença Apache 2.0. Consulte `LICENSE` para os termos completos. Marcas, bibliotecas e créditos de terceiros permanecem pertencentes aos respectivos autores.
 
-Esta é uma tradução comunitária independente e não é uma versão oficial do desenvolvedor original.
+Esta é uma tradução comunitária independente e não é uma versão oficial do desenvolvedor original. O repositório original não foi alterado.
