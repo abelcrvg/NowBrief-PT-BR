@@ -131,19 +131,19 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                     Text(
-                                        "Downloading… ${(downloadProgress * 100).toInt()}%",
+                                        "Baixando… ${(downloadProgress * 100).toInt()}%",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
                             MainViewModel.DownloadState.READY_TO_INSTALL -> {
-                                Text("✅ Download complete — tap Install to apply.",
+                                Text("✅ Download concluído — toque em Instalar para aplicar.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.primary)
                             }
                             MainViewModel.DownloadState.ERROR -> {
-                                Text("⚠️ Download failed. Tap below to open in browser.",
+                                Text("⚠️ Falha no download. Toque abaixo para abrir no navegador.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.error)
                             }
@@ -181,13 +181,13 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         MainViewModel.DownloadState.DOWNLOADING -> {
-                            TextButton(onClick = {}) { Text("Downloading…") }
+                            TextButton(onClick = {}) { Text("Baixando…") }
                         }
                     }
                 },
                 dismissButton = {
                     if (downloadState != MainViewModel.DownloadState.DOWNLOADING) {
-                        TextButton(onClick = { viewModel.skipUpdate(updateInfo!!.versionName) }) { Text("Skip") }
+                        TextButton(onClick = { viewModel.skipUpdate(updateInfo!!.versionName) }) { Text("Ignorar") }
                     }
                 }
             )
