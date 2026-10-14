@@ -316,7 +316,7 @@ fun HealthSourceSection(viewModel: SettingsViewModel) {
                 Column {
                     Text("Health Connect: ${if (d.healthConnectAvailable) "disponível" else "undisponível"} · permissions: ${if (d.permissionsGranted) "concedidas" else "not concedidas"}")
                     Text("Passos: ${if (d.stepRecordsAvailable) "yes" else "no"} · Sono: ${if (d.sleepRecordsAvailable) "yes" else "no"} · Frequência cardíaca: ${if (d.heartRateRecordsAvailable) "yes" else "no"}")
-                    Text("Samsung Health instalado: ${if (d.samsungHealthInstalled) "yes" else "no"} · Google Fit instalado: ${if (d.googleFitInstalled) "yes" else "no"}")
+                    Text("Samsung Health instalado: ${if (d.samsungHealthInstalled) "sim" else "não"} · Google Fit instalado: ${if (d.googleFitInstalled) "sim" else "não"}")
                     d.message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 }
             },
@@ -340,13 +340,13 @@ fun HealthSourceSection(viewModel: SettingsViewModel) {
         TextButton(onClick = {
             try { context.startActivity(com.kakao.taxi.data.repository.HealthAggregator.openGoogleFitIntent()) }
             catch (_: Exception) {}
-        }) { Text("Open Google Fit") }
+        }) { Text("Abrir Google Fit") }
     }
 
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Health data source") },
+            title = { Text("Fonte de dados de saúde") },
             text = {
                 Column {
                     options.forEach { (key, label) ->
@@ -371,7 +371,7 @@ fun HealthSourceSection(viewModel: SettingsViewModel) {
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showDialog = false }) { Text("Close") }
+                TextButton(onClick = { showDialog = false }) { Text("Fechar") }
             }
         )
     }
@@ -439,7 +439,7 @@ fun GeneralSection(viewModel: SettingsViewModel) {
         summary = {
             Text(
                 if (isStealthEnabled)
-                    "App icon hidden. Add the \"Open NowBrief\" tile to Quick Settings to access the app."
+                    "Ícone do aplicativo oculto. Adicione o atalho \"Abrir NowBrief\" às Configurações rápidas para acessar o aplicativo."
                 else
                     "Hide the app icon from the home screen & app drawer."
             )
@@ -449,14 +449,14 @@ fun GeneralSection(viewModel: SettingsViewModel) {
     if (showStealthDialog) {
         AlertDialog(
             onDismissRequest = { showStealthDialog = false },
-            title = { Text("Enable stealth mode?") },
+            title = { Text("Ativar modo discreto?") },
             text = {
                 Text(
-                    "The NowBrief icon will disappear from your home screen and app drawer. " +
-                    "To open the app afterwards, add the \"Open NowBrief\" tile to your " +
-                    "Quick Settings panel (swipe down → edit tiles).\n\n" +
-                    "You can turn this off again from this same Settings screen — " +
-                    "use the Quick Settings tile to get back here."
+                    "O ícone do NowBrief desaparecerá da tela inicial e da lista de aplicativos. " +
+                    "Para abrir o aplicativo depois, adicione o atalho \"Abrir NowBrief\" ao painel de " +
+                    "Configurações rápidas (deslize para baixo e edite os atalhos).\n\n" +
+                    "Você pode desativar isso nesta mesma tela de configurações — " +
+                    "use o atalho das Configurações rápidas para voltar aqui."
                 )
             },
             confirmButton = {
@@ -465,10 +465,10 @@ fun GeneralSection(viewModel: SettingsViewModel) {
                     viewModel.setStealthModeEnabled(true)
                     com.kakao.taxi.util.StealthHelper.setIconHidden(context, true)
                     showStealthDialog = false
-                }) { Text("Enable") }
+                }) { Text("Ativar") }
             },
             dismissButton = {
-                TextButton(onClick = { showStealthDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showStealthDialog = false }) { Text("Cancelar") }
             }
         )
     }
