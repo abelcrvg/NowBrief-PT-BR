@@ -278,10 +278,10 @@ class NowBriefRepository(
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
         val greetings = when {
             hour < 5  -> listOf("Still up? Rest well 🌙", "Burning the midnight oil 🌙", "Late night, take care 🌙")
-            hour < 12 -> listOf("Bom dia", "Acorde com energia ☀️", "Bom dia! Vamos fazer valer a pena", "Bom dia! Pronto para hoje?")
-            hour < 17 -> listOf("Boa tarde", "Espero que seu dia esteja indo bem", "Boa tarde! Continue nesse ritmo 🌤️")
-            hour < 21 -> listOf("Boa noite", "Boa noite! Hora de relaxar 🌅", "Boa noite! Como foi seu dia?")
-            else      -> listOf("Time to relax 🌙", "Boa noite! Rest up 🌙", "Winding down for the night 🌙")
+            hour < 12 -> listOf("Good morning", "Acorde com energia ☀️", "Bom dia! Vamos fazer valer a pena", "Good morning! Ready for today?")
+            hour < 17 -> listOf("Good afternoon", "Espero que seu dia esteja indo bem", "Boa tarde! Continue nesse ritmo 🌤️")
+            hour < 21 -> listOf("Good evening", "Boa noite! Hora de relaxar 🌅", "Good evening! How was your day?")
+            else      -> listOf("Time to relax 🌙", "Good night! Rest up 🌙", "Winding down for the night 🌙")
         }
         return greetings.random()
     }
@@ -912,7 +912,7 @@ Respond ONLY with valid JSON (no markdown):
         ))
     }
 
-    /** World News API — best quality, real notícias locais, supports 50+ countries
+    /** World News API — best quality, real local news, supports 50+ countries
      *  Kept for backwards-compat reference; main logic now in fetchWorldNewsLocal/Global */
     private suspend fun fetchWorldNewsAPI(): List<NewsArticle> = fetchWorldNewsLocal()
 
@@ -1051,7 +1051,7 @@ $newsTitles
 
 Respond ONLY with a valid JSON object (no markdown, no backticks). Fill EVERY field:
 {
-  "greeting": "Warm $timeOfDay greeting 2-4 words e.g. 'Bom dia'",
+  "greeting": "Warm $timeOfDay greeting 2-4 words e.g. 'Good morning'",
   "newsSummary": "Exatamente 2 frases em português brasileiro resumindo as 2 manchetes mais importantes acima. Cite os acontecimentos específicos.",
   "daySummary": "Exatamente 2 frases acolhedoras e úteis em português brasileiro para este período do dia, considerando o clima e o horário.",
   "weatherSummary": "Uma frase natural em português brasileiro sobre o clima de hoje.",
@@ -1202,7 +1202,7 @@ Respond ONLY with a valid JSON object (no markdown, no backticks). Fill EVERY fi
     }
 
     private fun wmoToCondition(code: Int): Pair<String, String> = when (code) {
-        0        -> "Céu limpo"     to "☀️"
+        0        -> "Clear Sky"     to "☀️"
         1, 2     -> "Partly Cloudy" to "⛅"
         3        -> "Overcast"      to "☁️"
         45, 48   -> "Foggy"         to "🌫️"
