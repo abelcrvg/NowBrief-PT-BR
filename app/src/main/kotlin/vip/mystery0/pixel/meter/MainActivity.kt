@@ -6,7 +6,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
-import android.provider.Configurações
+import android.provider.Settings
 import android.view.HapticFeedbackConstants
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -37,7 +37,7 @@ import com.kakao.taxi.data.repository.NetworkRepository
 import com.kakao.taxi.data.source.NetSpeedData
 import com.kakao.taxi.service.NowBriefService
 import com.kakao.taxi.ui.MainViewModel
-import com.kakao.taxi.ui.settings.ConfiguraçõesActivity
+import com.kakao.taxi.ui.settings.SettingsActivity
 import com.kakao.taxi.ui.theme.PixelPulseTheme
 import com.kakao.taxi.util.isServiceRunning
 
@@ -214,7 +214,7 @@ class MainActivity : ComponentActivity() {
                         }
                         IconButton(onClick = {
                             view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-                            startActivity(Intent(context, ConfiguraçõesActivity::class.java))
+                            startActivity(Intent(context, SettingsActivity::class.java))
                         }) {
                             Icon(Icons.Default.Configurações, contentDescription = "Configurações")
                         }
@@ -273,9 +273,9 @@ class MainActivity : ComponentActivity() {
                                     onClick = {
                                         view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
                                         // Step 1: check overlay (background display) permission first
-                                        if (!android.provider.Configurações.canDrawOverlays(context)) {
+                                        if (!android.provider.Settings.canDrawOverlays(context)) {
                                             val intent = Intent(
-                                                android.provider.Configurações.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                                android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                                                 "package:${context.packageName}".toUri()
                                             )
                                             context.startActivity(intent)
