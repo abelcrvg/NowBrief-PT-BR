@@ -123,7 +123,7 @@ class NowBriefActivity : ComponentActivity() {
 //    null on the very first composition frame / outside any captured layer.
 // ─────────────────────────────────────────────────────────────────────────
 
-// LocalGlassBackdrop retained for ConfiguraçõesActivity (Kyant0 LiquidToggle/Slider/Button)
+// LocalGlassBackdrop retained for SettingsActivity (Kyant0 LiquidToggle/Slider/Button)
 val LocalGlassBackdrop = staticCompositionLocalOf<Backdrop?> { null }
 
 // ── Aurora animated background ─────────────────────────────────────────
@@ -235,7 +235,7 @@ fun NowBriefScreen(repo: NowBriefRepository, networkRepo: com.kakao.taxi.data.re
     val scope   = rememberCoroutineScope()
     val pager   = rememberPagerState(pageCount = { 4 })
     val context = LocalContext.current
-    val tabs    = listOf("Resumo", "Clima", "Notícias", "Saúde")
+    val tabs    = listOf("Summary", "Weather", "News", "Vitals")
     val isNeo        by networkRepo.isNeoThemeEnabled.collectAsState()
     var articleUrl   by remember { mutableStateOf<String?>(null) }
     var articleTitle by remember { mutableStateOf("") }
@@ -267,7 +267,7 @@ fun NowBriefScreen(repo: NowBriefRepository, networkRepo: com.kakao.taxi.data.re
 
     // Root-level backdrop — captures ONLY the base gradient + scanline/glow layer
     // (never the content drawn on top of it) so any LiquidGlassCard/NavBar outside
-    // an AuroraBackground (Clima/Notícias/Saúde tabs, the bottom nav bar) still gets
+    // an AuroraBackground (Weather/News/Vitals tabs, the bottom nav bar) still gets
     // genuine blur+refraction. IMPORTANT: this must wrap a background-only layer,
     // never a layer that itself contains elements sampling this same backdrop —
     // doing so creates a circular capture (the backdrop's content draws elements
@@ -342,8 +342,8 @@ fun NowBriefScreen(repo: NowBriefRepository, networkRepo: com.kakao.taxi.data.re
         }
         CompositionLocalProvider(LocalGlassBackdrop provides rootBackdrop) {
         Column(Modifier.fillMaxSize()) {
-            TopHeader(state.isCarregando, state.weather.cityName, state.lastUpdated, isNeo,
-                onAtualizar = { scope.launch { repo.refreshAll() } },
+            TopHeader(state.isLoading, state.weather.cityName, state.lastUpdated, isNeo,
+                onRefresh = { scope.launch { repo.refreshAll() } },
                 onNeoToggle = { networkRepo.setNeoThemeEnabled(!isNeo) }
             )
             Box(Modifier.fillMaxSize()) {
@@ -352,17 +352,17 @@ fun NowBriefScreen(repo: NowBriefRepository, networkRepo: com.kakao.taxi.data.re
                     Modifier.fillMaxSize().navigationBarsPadding().padding(bottom = 80.dp)
                 ) { page ->
                     when (page) {
-                        0 -> ResumoTab(state) { scope.launch { repo.refreshAll() } }
-                        1 -> ClimaTab(state.weather, state.isCarregando)
-                        2 -> NotíciasTab(state.news, state.isCarregando, isNeo,
-                            onAtualizar = { scope.launch { repo.refreshAll() } },
+                        0 -> SummaryTab(state) { scope.launch { repo.refreshAll() } }
+                        1 -> WeatherTab(state.weather, state.isLoading)
+                        2 -> NewsTab(state.news, state.isLoading, isNeo,
+                            onRefresh = { scope.launch { repo.refreshAll() } },
                             onArticleClick = { url ->
                                 val art = state.news.firstOrNull { it.url == url }
                                 articleTitle = art?.title ?: "Article"
                                 articleUrl = url
                             }
                         )
-                        3 -> SaúdeTab()
+                        3 -> VitalsTab()
                     }
                 }
                 // Real upstream Kyant0/AndroidLiquidGlass nav bar (verbatim component).
@@ -410,7 +410,7 @@ fun NowBriefScreen(repo: NowBriefRepository, networkRepo: com.kakao.taxi.data.re
 fun ArticleViewer(url: String, title: String, isNeo: Boolean, onClose: () -> Unit) {
     val context = LocalContext.current
     var loadProgress by remember { mutableStateOf(0f) }
-    var isPageCarregando by remember { mutableStateOf(true) }
+    var isPageLoading by remember { mutableStateOf(true) }
     var pageTitle by remember { mutableStateOf(title) }
 
     val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
@@ -471,7 +471,7 @@ fun ArticleViewer(url: String, title: String, isNeo: Boolean, onClose: () -> Uni
                     }
                 }
                 // Progress bar
-                if (isPageCarregando) {
+                if (isPageLoading) {
                     Box(Modifier.fillMaxWidth().height(2.dp)
                         .background(if (isNeo) Color(0xFF0F172A) else MaterialTheme.colorScheme.surfaceVariant)) {
                         Box(Modifier.fillMaxHeight().fillMaxWidth(loadProgress.coerceIn(0f,1f))
@@ -494,15 +494,15 @@ fun ArticleViewer(url: String, title: String, isNeo: Boolean, onClose: () -> Uni
                         settings.builtInZoomControls = true
                         settings.displayZoomControls = false
                         webViewClient = object : android.webkit.WebViewClient() {
-                            override fun onPageStarted(v: android.webkit.WebView, u: String, f: android.graphics.Bitmap?) { isPageCarregando = true }
+                            override fun onPageStarted(v: android.webkit.WebView, u: String, f: android.graphics.Bitmap?) { isPageLoading = true }
                             override fun onPageFinished(v: android.webkit.WebView, u: String) {
-                                isPageCarregando = false; pageTitle = v.title?.takeIf { it.isNotBlank() } ?: title
+                                isPageLoading = false; pageTitle = v.title?.takeIf { it.isNotBlank() } ?: title
                             }
-                            override fun shouldOverrideUrlCarregando(v: android.webkit.WebView, r: android.webkit.WebResourceRequest) = false
+                            override fun shouldOverrideUrlLoading(v: android.webkit.WebView, r: android.webkit.WebResourceRequest) = false
                         }
                         webChromeClient = object : android.webkit.WebChromeClient() {
                             override fun onProgressChanged(v: android.webkit.WebView, p: Int) {
-                                loadProgress = p / 100f; if (p >= 100) isPageCarregando = false
+                                loadProgress = p / 100f; if (p >= 100) isPageLoading = false
                             }
                             override fun onReceivedTitle(v: android.webkit.WebView, t: String?) {
                                 pageTitle = t?.takeIf { it.isNotBlank() } ?: title
@@ -518,10 +518,10 @@ fun ArticleViewer(url: String, title: String, isNeo: Boolean, onClose: () -> Uni
 
 // ─── TOP HEADER ───────────────────────────────────────────────────────
 @Composable
-fun TopHeader(isCarregando: Boolean, cityName: String, lastUpdated: Long, isNeo: Boolean, onAtualizar: () -> Unit, onNeoToggle: () -> Unit) {
+fun TopHeader(isLoading: Boolean, cityName: String, lastUpdated: Long, isNeo: Boolean, onRefresh: () -> Unit, onNeoToggle: () -> Unit) {
     val rotation by animateFloatAsState(
-        targetValue = if (isCarregando) 360f else 0f,
-        animationSpec = if (isCarregando) infiniteRepeatable(tween(700, easing = LinearEasing), RepeatMode.Restart) else tween(0),
+        targetValue = if (isLoading) 360f else 0f,
+        animationSpec = if (isLoading) infiniteRepeatable(tween(700, easing = LinearEasing), RepeatMode.Restart) else tween(0),
         label = "spin"
     )
     val timeStr = remember { SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date()) }
@@ -579,11 +579,11 @@ fun TopHeader(isCarregando: Boolean, cityName: String, lastUpdated: Long, isNeo:
                 Text("◈", fontSize = 14.sp,
                     color = if (isNeo) Color.White else MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            // Atualizar
-            IconButton(onClick = onAtualizar, enabled = !isCarregando) {
-                Icon(Icons.Filled.Atualizar, "Atualizar",
-                    tint = if (isNeo) Color(0xFF22D3EE).copy(if (isCarregando) 1f else 0.7f)
-                           else if (isCarregando) MaterialTheme.colorScheme.primary
+            // Refresh
+            IconButton(onClick = onRefresh, enabled = !isLoading) {
+                Icon(Icons.Filled.Refresh, "Refresh",
+                    tint = if (isNeo) Color(0xFF22D3EE).copy(if (isLoading) 1f else 0.7f)
+                           else if (isLoading) MaterialTheme.colorScheme.primary
                            else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(22.dp).rotate(rotation))
             }
@@ -597,20 +597,20 @@ fun TopHeader(isCarregando: Boolean, cityName: String, lastUpdated: Long, isNeo:
 // copied unmodified into this project — see app/src/main/kotlin/com/kyant/backdrop/catalog/).
 
 // ─── SLEEP DOUBLE RING ────────────────────────────────────────────────────
-// Outer ring = Noite sleep (purple). Inner ring = Nap (amber).
-// No Samsung Health dependency — nap comes from HC SonoDisplayMode.TODAY_NAP
-// or heuristic: estimatedSonoH < 4h AND hour > 9.
+// Outer ring = Night sleep (purple). Inner ring = Nap (amber).
+// No Samsung Health dependency — nap comes from HC SleepDisplayMode.TODAY_NAP
+// or heuristic: estimatedSleepH < 4h AND hour > 9.
 @Composable
-private fun SonoDoubleRing(
+private fun SleepDoubleRing(
     nightProgress: Float, nightValue: String, nightColor: Color,
     napProgress: Float, napValue: String, hasNap: Boolean,
-    nightGoalStr: String, isSonoingNow: Boolean,
+    nightGoalStr: String, isSleepingNow: Boolean,
     onEditGoal: () -> Unit
 ) {
     val inf   = rememberInfiniteTransition(label = "sleepRing")
     val pulse by inf.animateFloat(0.7f, 1f,
         infiniteRepeatable(tween(1600, easing = FastOutSlowInEasing), RepeatMode.Reverse), "sleepPulse")
-    val animNoite by animateFloatAsState(nightProgress.coerceIn(0f, 1f), tween(1400, easing = FastOutSlowInEasing), label = "nightP")
+    val animNight by animateFloatAsState(nightProgress.coerceIn(0f, 1f), tween(1400, easing = FastOutSlowInEasing), label = "nightP")
     val animNap   by animateFloatAsState(napProgress.coerceIn(0f, 1f),   tween(1200, easing = FastOutSlowInEasing), label = "napP")
     val napColor  = Color(0xFFFFA726)
 
@@ -640,12 +640,12 @@ private fun SonoDoubleRing(
                 drawArc(nightColor.copy(0.12f), -90f, 360f, false, oTL, oSz,
                     style = Stroke(outerStroke, cap = StrokeCap.Round))
                 // ── Outer progress arc ─────────────────────────────────
-                if (animNoite > 0.01f)
-                    drawArc(nightColor, -90f, animNoite * 360f, false, oTL, oSz,
+                if (animNight > 0.01f)
+                    drawArc(nightColor, -90f, animNight * 360f, false, oTL, oSz,
                         style = Stroke(outerStroke, cap = StrokeCap.Round))
                 // ── Outer tip dot ──────────────────────────────────────
-                if (animNoite > 0.01f) {
-                    val a = (-PI / 2.0 + animNoite * PI * 2.0)
+                if (animNight > 0.01f) {
+                    val a = (-PI / 2.0 + animNight * PI * 2.0)
                     val tx = (ctr.x + oR * cos(a)).toFloat()
                     val ty = (ctr.y + oR * sin(a)).toFloat()
                     drawCircle(nightColor.copy(alpha = 0.35f * pulse), outerStroke * 0.95f, Offset(tx, ty))
@@ -685,12 +685,12 @@ private fun SonoDoubleRing(
                 if (hasNap)
                     Text("+ $napValue", fontSize = 9.sp, color = Color(0xFFFFA726), textAlign = TextAlign.Center)
                 else
-                    Text(if (isSonoingNow) "sleeping" else "/ $nightGoalStr",
+                    Text(if (isSleepingNow) "sleeping" else "/ $nightGoalStr",
                         fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f), textAlign = TextAlign.Center)
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(if (isSonoingNow) "\uD83C\uDF19" else "\uD83D\uDCA4", fontSize = 13.sp)
+            Text(if (isSleepingNow) "\uD83C\uDF19" else "\uD83D\uDCA4", fontSize = 13.sp)
             if (hasNap) Text("\u2600\uFE0F", fontSize = 11.sp)
         }
         TextButton(onClick = onEditGoal, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)) {
@@ -760,8 +760,8 @@ fun TabPills(tabs: List<String>, selected: Int, isNeo: Boolean, onSelect: (Int) 
 
 // ─── TAB 1: SUMMARY ───────────────────────────────────────────────────
 @Composable
-fun ResumoTab(state: BriefState, onAtualizar: () -> Unit) {
-    if (state.isCarregando && state.lastUpdated == 0L) { WarmCarregandoScreen("Preparando seu resumo..."); return }
+fun SummaryTab(state: BriefState, onRefresh: () -> Unit) {
+    if (state.isLoading && state.lastUpdated == 0L) { WarmLoadingScreen("Preparando seu resumo..."); return }
     AuroraBackground(Modifier.fillMaxSize()) {
     LazyColumn(Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
@@ -772,13 +772,13 @@ fun ResumoTab(state: BriefState, onAtualizar: () -> Unit) {
                 fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary,
                 lineHeight = 42.sp, modifier = Modifier.padding(bottom = 2.dp))
         }
-        if (state.summary.dayResumo.isNotBlank())
-            item { AIResumoCard("SEU DIA EM RESUMO", "\uD83C\uDF05", state.summary.dayResumo, MaterialTheme.colorScheme.primary) }
+        if (state.summary.daySummary.isNotBlank())
+            item { AISummaryCard("SEU DIA EM RESUMO", "\uD83C\uDF05", state.summary.daySummary, MaterialTheme.colorScheme.primary) }
         if (state.weather.cityName != "Unknown" && state.weather.temperature != 0.0)
-            item { ResumoClimaInsightCard(state.weather) }
-        if (state.summary.newsResumo.isNotBlank())
-            item { AIResumoCard("RESUMO DE NOTÍCIAS", "\uD83D\uDCF0", state.summary.newsResumo, Color(0xFF2196F3)) }
-        item { ResumoSaúdeDigestCard() }
+            item { SummaryWeatherInsightCard(state.weather) }
+        if (state.summary.newsSummary.isNotBlank())
+            item { AISummaryCard("RESUMO DE NOTÍCIAS", "\uD83D\uDCF0", state.summary.newsSummary, Color(0xFF2196F3)) }
+        item { SummaryVitalsDigestCard() }
         if (state.summary.quote.isNotBlank())
             item { QuoteCard(state.summary.quote) }
 
@@ -819,14 +819,14 @@ fun ResumoTab(state: BriefState, onAtualizar: () -> Unit) {
         }
         if (state.summary.music != null) item { MusicCard(state.summary.music) }
         if (state.summary.tips.isNotEmpty()) item { DailyTipsSection(state.summary.tips) }
-        if (state.error != null) item { ErrorCard(state.error, onAtualizar) }
+        if (state.error != null) item { ErrorCard(state.error, onRefresh) }
         item { Spacer(Modifier.height(24.dp)) }
     }
     } // AuroraBackground
 }
 
 @Composable
-fun AIResumoCard(label: String, icon: String, text: String, accentColor: Color) {
+fun AISummaryCard(label: String, icon: String, text: String, accentColor: Color) {
     LiquidGlassCard(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -839,7 +839,7 @@ fun AIResumoCard(label: String, icon: String, text: String, accentColor: Color) 
 }
 
 @Composable
-fun ClimaResumoCard(weatherResumo: String, weatherAdvice: String, icon: String) {
+fun WeatherSummaryCard(weatherSummary: String, weatherAdvice: String, icon: String) {
     LiquidGlassCard(modifier = Modifier.fillMaxWidth()) {
         Row(Modifier.padding(18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.Top) {
             Box(Modifier.size(48.dp).background(MaterialTheme.colorScheme.surface, RoundedCornerShape(14.dp)),
@@ -847,8 +847,8 @@ fun ClimaResumoCard(weatherResumo: String, weatherAdvice: String, icon: String) 
             Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.weight(1f)) {
                 Text("CLIMA DE HOJE", fontSize = 10.sp, fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), letterSpacing = 1.sp)
-                if (weatherResumo.isNotBlank())
-                    Text(weatherResumo, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface, lineHeight = 20.sp)
+                if (weatherSummary.isNotBlank())
+                    Text(weatherSummary, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface, lineHeight = 20.sp)
                 if (weatherAdvice.isNotBlank())
                     Box(Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), RoundedCornerShape(50))
                         .padding(horizontal = 10.dp, vertical = 4.dp)) {
@@ -860,14 +860,14 @@ fun ClimaResumoCard(weatherResumo: String, weatherAdvice: String, icon: String) 
     }
 }
 
-// ── Resumo tab: Clima Insight card ────────────────────────────────────────
+// ── Summary tab: Weather Insight card ────────────────────────────────────────
 @Composable
-fun ResumoClimaInsightCard(weather: com.kakao.taxi.data.model.ClimaData) {
+fun SummaryWeatherInsightCard(weather: com.kakao.taxi.data.model.WeatherData) {
     var insight by remember { mutableStateOf("") }
     LaunchedEffect(weather.cityName, weather.condition) {
         if (weather.cityName == "Unknown") return@LaunchedEffect
         insight = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            buildClimaInsight(weather)
+            buildWeatherInsight(weather)
         }
     }
     if (insight.isBlank()) return
@@ -892,9 +892,9 @@ fun ResumoClimaInsightCard(weather: com.kakao.taxi.data.model.ClimaData) {
     }
 }
 
-// ── Resumo tab: Saúde digest card ──────────────────────────────────────────
+// ── Summary tab: Vitals digest card ──────────────────────────────────────────
 @Composable
-fun ResumoSaúdeDigestCard() {
+fun SummaryVitalsDigestCard() {
     val context = LocalContext.current
     val hasActivity = remember {
         androidx.core.content.ContextCompat.checkSelfPermission(
@@ -903,7 +903,7 @@ fun ResumoSaúdeDigestCard() {
     }
     val stepCount = if (hasActivity) rememberStepCount() else -1
     val (totalScreenMin, _) = remember {
-        if (hasUsageAccess(context)) getScreenTimeHoje(context) else Pair(0L, emptyList<AppUsage>())
+        if (hasUsageAccess(context)) getScreenTimeToday(context) else Pair(0L, emptyList<AppUsage>())
     }
     val caloriesBurned = if (stepCount > 0) (stepCount * 0.04f).toInt() else 0
     val distanceKm     = if (stepCount > 0) "%.1f".format(stepCount * 0.00078f) else "--"
@@ -1135,7 +1135,7 @@ private fun weatherIconType(icon: String, condition: String): String {
 }
 
 @Composable
-fun ClimaAnimIcon(icon: String, condition: String, modifier: Modifier = Modifier) {
+fun WeatherAnimIcon(icon: String, condition: String, modifier: Modifier = Modifier) {
     val type = remember(icon, condition) { weatherIconType(icon, condition) }
     val tod  = remember { getTimeOfDay() }
     // At night, "clear" becomes a moon scene, "cloudy" becomes night-cloud
@@ -1342,7 +1342,7 @@ fun ClimaAnimIcon(icon: String, condition: String, modifier: Modifier = Modifier
                 drawLine(Color(0xFFFFEE00).copy(alpha = boltAlpha * 0.8f), bMid2, forkEnd, strokeWidth = 4f, cap = StrokeCap.Round)
                 drawLine(Color.White.copy(alpha = boltAlpha * 0.7f), bMid2, forkEnd, strokeWidth = 1.8f, cap = StrokeCap.Round)
 
-                // Chuva drops under cloud
+                // Rain drops under cloud
                 val rainDrops = listOf(
                     Pair(-cr*1.0f, 0.00f), Pair(-cr*0.4f, 0.18f), Pair(cr*0.6f, 0.40f),
                     Pair(cr*1.0f,  0.60f), Pair(-cr*0.65f, 0.78f), Pair(cr*0.25f, 0.88f)
@@ -1446,15 +1446,15 @@ fun SunArcCard(sunrise: String, sunset: String) {
     val sunsetH  = remember { parseHour(sunset) }
     val nowH     = remember { now.get(Calendar.HOUR_OF_DAY) + now.get(Calendar.MINUTE) / 60f }
 
-    val isNoite  = tod == TimeOfDay.NIGHT
-    val rawProg  = if (isNoite) 1f else ((nowH - sunriseH) / (sunsetH - sunriseH)).coerceIn(0f, 1f)
+    val isNight  = tod == TimeOfDay.NIGHT
+    val rawProg  = if (isNight) 1f else ((nowH - sunriseH) / (sunsetH - sunriseH)).coerceIn(0f, 1f)
     val animProg by animateFloatAsState(rawProg, tween(1400, easing = FastOutSlowInEasing), label = "arcP")
 
     // Countdown label
     val label = remember {
         when {
-            isNoite -> "Noitetime \u2022 Nascer do sol at $sunrise"
-            nowH >= sunsetH -> "Noitetime \u2022 Nascer do sol at $sunrise"
+            isNight -> "Nighttime \u2022 Sunrise at $sunrise"
+            nowH >= sunsetH -> "Nighttime \u2022 Sunrise at $sunrise"
             else -> {
                 val minLeft = ((sunsetH - nowH) * 60).toInt()
                 val h = minLeft / 60; val m = minLeft % 60
@@ -1468,15 +1468,15 @@ fun SunArcCard(sunrise: String, sunset: String) {
     val glowPulse by inf.animateFloat(0.85f, 1f, infiniteRepeatable(tween(1200, easing = FastOutSlowInEasing), RepeatMode.Reverse), "glow")
     val starTwink by inf.animateFloat(0f, 1f, infiniteRepeatable(tween(800,  easing = FastOutSlowInEasing), RepeatMode.Reverse), "st")
 
-    // Noite sky stars (stable random positions)
+    // Night sky stars (stable random positions)
     val stars = remember { (0..18).map { Triple((Math.random()).toFloat(), (Math.random()*0.7f).toFloat(), Math.random().toFloat()) } }
 
-    val bgTop    = if (isNoite) Color(0xFF000008) else Color(0xFFE3F2FD)
-    val bgBot    = if (isNoite) Color(0xFF060F2A) else Color(0xFFFFF8E1)
-    val bodyCol  = if (isNoite) Color(0xFFEEF2FF) else Color(0xFFFFC107)
-    val glowCol  = if (isNoite) Color(0x60B0C8FF) else Color(0x80FFD54F)
-    val trackCol = if (isNoite) Color(0x40FFFFFF) else Color(0x30FFA726)
-    val fillCol  = if (isNoite) Color(0x50B0C8FF) else Color(0xAAFFC107)
+    val bgTop    = if (isNight) Color(0xFF000008) else Color(0xFFE3F2FD)
+    val bgBot    = if (isNight) Color(0xFF060F2A) else Color(0xFFFFF8E1)
+    val bodyCol  = if (isNight) Color(0xFFEEF2FF) else Color(0xFFFFC107)
+    val glowCol  = if (isNight) Color(0x60B0C8FF) else Color(0x80FFD54F)
+    val trackCol = if (isNight) Color(0x40FFFFFF) else Color(0x30FFA726)
+    val fillCol  = if (isNight) Color(0x50B0C8FF) else Color(0xAAFFC107)
 
     LiquidGlassCard(
         modifier = Modifier.fillMaxWidth()
@@ -1497,8 +1497,8 @@ fun SunArcCard(sunrise: String, sunset: String) {
                     val topLeft = Offset(arcCx - arcR, arcBaseline - arcR)
                     val arcSz  = Size(arcR * 2, arcR * 2)
 
-                    // Noite stars
-                    if (isNoite) {
+                    // Night stars
+                    if (isNight) {
                         stars.forEach { (sx, sy, ph) ->
                             val a = ((sin(starTwink * PI * 2 + ph * PI * 2) + 1) / 2 * 0.75f + 0.25f).toFloat()
                             drawCircle(Color.White.copy(alpha = a), if (ph > 0.7f) 2.5f else 1.5f,
@@ -1527,7 +1527,7 @@ fun SunArcCard(sunrise: String, sunset: String) {
 
                     // Body
                     drawCircle(bodyCol, gr * 0.72f, Offset(bx, by))
-                    if (!isNoite) {
+                    if (!isNight) {
                         // inner bright spot
                         drawCircle(Color(0xFFFFECB3), gr * 0.38f, Offset(bx, by))
                     } else {
@@ -1536,7 +1536,7 @@ fun SunArcCard(sunrise: String, sunset: String) {
                     }
 
                     // Shimmer sparkles around sun (day only)
-                    if (!isNoite) {
+                    if (!isNight) {
                         repeat(5) { i ->
                             val sp = (sparkle + i * 0.2f) % 1f
                             val sa = (sp * PI * 2 + i * 0.8).toFloat()
@@ -1552,32 +1552,32 @@ fun SunArcCard(sunrise: String, sunset: String) {
                     drawLine(trackCol, Offset(arcCx - arcR, arcBaseline), Offset(arcCx + arcR, arcBaseline),
                         strokeWidth = 2f)
 
-                    // Nascer do sol dot (left end)
+                    // Sunrise dot (left end)
                     drawCircle(Color(0xFFFFA726), 6f, Offset(arcCx - arcR, arcBaseline))
-                    // Pôr do sol dot (right end)
+                    // Sunset dot (right end)
                     drawCircle(Color(0xFFEF5350), 6f, Offset(arcCx + arcR, arcBaseline))
                 }
 
-                // ── Nascer do sol / Pôr do sol labels ───────────────────────────
+                // ── Sunrise / Sunset labels ───────────────────────────
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column(horizontalAlignment = Alignment.Start) {
                         Text("SUNRISE", fontSize = 9.sp, fontWeight = FontWeight.Bold,
                             letterSpacing = 0.8.sp,
-                            color = if (isNoite) Color.White.copy(0.5f) else Color(0xFFFFA726))
+                            color = if (isNight) Color.White.copy(0.5f) else Color(0xFFFFA726))
                         Text(sunrise, fontSize = 15.sp, fontWeight = FontWeight.Bold,
-                            color = if (isNoite) Color.White.copy(0.9f) else Color(0xFF5D4037))
+                            color = if (isNight) Color.White.copy(0.9f) else Color(0xFF5D4037))
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(label, fontSize = 11.sp, textAlign = TextAlign.Center,
-                            color = if (isNoite) Color.White.copy(0.65f) else Color(0xFF795548),
+                            color = if (isNight) Color.White.copy(0.65f) else Color(0xFF795548),
                             lineHeight = 15.sp)
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text("SUNSET", fontSize = 9.sp, fontWeight = FontWeight.Bold,
                             letterSpacing = 0.8.sp,
-                            color = if (isNoite) Color.White.copy(0.5f) else Color(0xFFEF5350))
+                            color = if (isNight) Color.White.copy(0.5f) else Color(0xFFEF5350))
                         Text(sunset, fontSize = 15.sp, fontWeight = FontWeight.Bold,
-                            color = if (isNoite) Color.White.copy(0.9f) else Color(0xFF5D4037))
+                            color = if (isNight) Color.White.copy(0.9f) else Color(0xFF5D4037))
                     }
                 }
             }
@@ -1590,16 +1590,16 @@ fun SunArcCard(sunrise: String, sunset: String) {
 // ═══════════════════════════════════════════════════════════════════════
 
 @Composable
-fun ClimaTab(weather: ClimaData, isCarregando: Boolean) {
+fun WeatherTab(weather: WeatherData, isLoading: Boolean) {
     val hasData = weather.cityName != "Unknown" && weather.temperature != 0.0
     if (!hasData) {
-        if (isCarregando) { WarmCarregandoScreen("Buscando previsão do tempo..."); return }
+        if (isLoading) { WarmLoadingScreen("Buscando previsão do tempo..."); return }
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), Alignment.Center) {
             val context = LocalContext.current
             Column(horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.padding(32.dp)) {
                 Text("\uD83C\uDF24\uFE0F", fontSize = 56.sp)
-                Text("Clima indisponível", fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
+                Text("Weather Unavailable", fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface)
                 Text("Não foi possível obter sua localização. Conceda a permissão de localização.",
                     fontSize = 13.sp, textAlign = TextAlign.Center,
@@ -1637,21 +1637,21 @@ fun ClimaTab(weather: ClimaData, isCarregando: Boolean) {
                         Text("${weather.temperature.toInt()}\u00b0C", fontSize = 56.sp,
                             fontWeight = FontWeight.ExtraBold, color = Color.White, lineHeight = 60.sp)
                         Text(weather.condition, fontSize = 15.sp, color = Color.White.copy(0.85f))
-                        Text("Sensação térmica ${weather.feelsLike.toInt()}\u00b0C", fontSize = 12.sp, color = Color.White.copy(0.65f))
+                        Text("Feels like ${weather.feelsLike.toInt()}\u00b0C", fontSize = 12.sp, color = Color.White.copy(0.65f))
                     }
                     // Canvas-drawn animated weather icon in hero
-                    ClimaAnimIcon(weather.icon, weather.condition,
+                    WeatherAnimIcon(weather.icon, weather.condition,
                         modifier = Modifier.size(100.dp).padding(bottom = 8.dp))
                 }
             }
         }
 
-        // ── Clima Insight banner — shown at very top ─────────────────
+        // ── Weather Insight banner — shown at very top ─────────────────
         item {
             var wInsight by remember { mutableStateOf("") }
             LaunchedEffect(weather.cityName) {
                 if (weather.cityName == "Unknown") return@LaunchedEffect
-                wInsight = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { buildClimaInsight(weather) }
+                wInsight = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { buildWeatherInsight(weather) }
             }
             if (wInsight.isNotBlank()) LiquidGlassCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1666,7 +1666,7 @@ fun ClimaTab(weather: ClimaData, isCarregando: Boolean) {
         }
 
         // ── Detail grid: all 6 cards ───────────────────────────────────
-        item { ClimaGrid(weather) }
+        item { WeatherGrid(weather) }
 
         // ── Full SunArcCard (replaces old sunrise/sunset row) ──────────
         item { SunArcCard(weather.sunrise, weather.sunset) }
@@ -1687,7 +1687,7 @@ fun ClimaTab(weather: ClimaData, isCarregando: Boolean) {
                     }
                     Box(Modifier.size(18.dp).background(aqiColor, RoundedCornerShape(50)))
                     Column(Modifier.weight(1f)) {
-                        Text("Qualidade do ar", fontSize = 12.sp,
+                        Text("Air Quality", fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.7f))
                         Text(weather.airQualityLabel, fontSize = 18.sp, fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface)
@@ -1703,14 +1703,14 @@ fun ClimaTab(weather: ClimaData, isCarregando: Boolean) {
 
 // ─── WEATHER GRID (6 cards: humidity, wind, rain, uv, visibility, feels like) ──
 @Composable
-fun ClimaGrid(weather: ClimaData) {
+fun WeatherGrid(weather: WeatherData) {
     // Data: (label, value, icon-type for canvas)
     data class GridItem(val label: String, val value: String, val emoji: String)
     val items = listOf(
-        GridItem("Umidade",    "${weather.humidity}%",              "\uD83D\uDCA7"),
-        GridItem("Vento",        "${weather.windSpeed.toInt()} km/h", "\uD83D\uDCA8"),
-        GridItem("Chuva Chance", "${weather.rainChance}%",            "\uD83C\uDF27"),
-        GridItem("Índice UV",    uvLabel(weather.uvIndex),            "\u2600\uFE0F"),
+        GridItem("Humidity",    "${weather.humidity}%",              "\uD83D\uDCA7"),
+        GridItem("Wind",        "${weather.windSpeed.toInt()} km/h", "\uD83D\uDCA8"),
+        GridItem("Rain Chance", "${weather.rainChance}%",            "\uD83C\uDF27"),
+        GridItem("UV Index",    uvLabel(weather.uvIndex),            "\u2600\uFE0F"),
         GridItem("Visibilidade",  "${weather.visibility.toInt()} km",  "\uD83D\uDC41\uFE0F"),
         GridItem("Sensação térmica",  "${weather.feelsLike.toInt()}\u00b0C", "\uD83C\uDF21\uFE0F")
     )
@@ -1750,23 +1750,23 @@ fun uvLabel(uv: Int) = when {
 
 // ─── TAB 3: NEWS ──────────────────────────────────────────────────────
 @Composable
-fun NotíciasTab(news: List<NotíciasArticle>, isCarregando: Boolean, isNeo: Boolean = false, onAtualizar: () -> Unit = {}, onArticleClick: (String) -> Unit) {
-    if (isCarregando && news.isEmpty()) { WarmCarregandoScreen("Carregando as últimas notícias..."); return }
+fun NewsTab(news: List<NewsArticle>, isLoading: Boolean, isNeo: Boolean = false, onRefresh: () -> Unit = {}, onArticleClick: (String) -> Unit) {
+    if (isLoading && news.isEmpty()) { WarmLoadingScreen("Loading latest news..."); return }
     val isError = news.isNotEmpty() && news.all { it.category == "System" }
     if (news.isEmpty() || isError) {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(horizontal = 32.dp)) {
                 Text("\uD83D\uDCE1", fontSize = 48.sp)
-                Text(if (isError) "Notícias indisponíveis" else "Nenhuma notícia carregada ainda",
+                Text(if (isError) "News unavailable" else "Nenhuma notícia carregada ainda",
                     fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                 Text(if (isError) "Verifique sua conexão com a internet e tente novamente."
                      else "Toque abaixo para carregar as principais notícias de hoje.",
                     fontSize = 14.sp, textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 20.sp)
                 Spacer(Modifier.height(4.dp))
-                Button(onAtualizar) {
-                    Icon(Icons.Default.Atualizar, null, modifier = Modifier.size(16.dp))
+                Button(onRefresh) {
+                    Icon(Icons.Default.Refresh, null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp)); Text("Tentar novamente")
                 }
             }
@@ -1777,7 +1777,7 @@ fun NotíciasTab(news: List<NotíciasArticle>, isCarregando: Boolean, isNeo: Boo
     // AI state
     var searchQuery    by remember { mutableStateOf("") }
     var aiAnswer       by remember { mutableStateOf("") }
-    var aiCarregando      by remember { mutableStateOf(false) }
+    var aiLoading      by remember { mutableStateOf(false) }
     val scope          = rememberCoroutineScope()
 
     val grouped = news.groupBy { it.category }
@@ -1791,7 +1791,7 @@ fun NotíciasTab(news: List<NotíciasArticle>, isCarregando: Boolean, isNeo: Boo
     val emojis  = mapOf("World" to "\uD83C\uDF0D", "Technology" to "\uD83D\uDCBB",
         "Business" to "\uD83D\uDCC8", "Sports" to "\u26BD", "Science" to "\uD83D\uDD2C",
         "Entertainment" to "\uD83C\uDFAC", "General" to "\uD83D\uDCF0", "Health" to "\uD83C\uDFE5",
-        "Top Notícias" to "\uD83D\uDDDE\uFE0F", "Politics" to "\uD83C\uDFDB\uFE0F", "Environment" to "\uD83C\uDF3F")
+        "Top News" to "\uD83D\uDDDE\uFE0F", "Politics" to "\uD83C\uDFDB\uFE0F", "Environment" to "\uD83C\uDF3F")
 
     val neoBlue   = Color(0xFF22D3EE)
     val neoPurple = Color(0xFFA855F7)
@@ -1807,7 +1807,7 @@ fun NotíciasTab(news: List<NotíciasArticle>, isCarregando: Boolean, isNeo: Boo
             contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 160.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)) {
 
-            // Notícias digest summary banner
+            // News digest summary banner
             if (news.isNotEmpty()) item {
                 val headlines = news.take(3).joinToString(" \u00b7 ") { it.title.take(50) }
                 LiquidGlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
@@ -1826,7 +1826,7 @@ fun NotíciasTab(news: List<NotíciasArticle>, isCarregando: Boolean, isNeo: Boo
             }
 
             // AI answer card
-            if (aiAnswer.isNotBlank() || aiCarregando) {
+            if (aiAnswer.isNotBlank() || aiLoading) {
                 item {
                     Box(Modifier.fillMaxWidth().padding(bottom = 10.dp)) {
                         // Glow behind card
@@ -1846,20 +1846,20 @@ fun NotíciasTab(news: List<NotíciasArticle>, isCarregando: Boolean, isNeo: Boo
                             Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     // Pulsing dot
-                                    if (aiCarregando) {
+                                    if (aiLoading) {
                                         val inf = rememberInfiniteTransition(label = "pulse")
                                         val alpha by inf.animateFloat(0.3f, 1f, infiniteRepeatable(tween(600), RepeatMode.Reverse), "a")
                                         Box(Modifier.size(8.dp).clip(CircleShape).background(neoBlue.copy(alpha)))
                                     } else {
                                         Box(Modifier.size(8.dp).clip(CircleShape).background(if (isNeo) neoBlue else MaterialTheme.colorScheme.primary))
                                     }
-                                    Text(if (aiCarregando) "THINKING..." else "SMART ANSWER",
+                                    Text(if (aiLoading) "THINKING..." else "SMART ANSWER",
                                         fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 2.sp,
                                         color = if (isNeo) neoBlue else MaterialTheme.colorScheme.primary)
                                     Spacer(Modifier.weight(1f))
                                     // Dismiss
                                     Text("✕", fontSize = 11.sp, color = if (isNeo) neoMuted else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.clickable { aiAnswer = ""; aiCarregando = false })
+                                        modifier = Modifier.clickable { aiAnswer = ""; aiLoading = false })
                                 }
                                 if (aiAnswer.isNotBlank()) {
                                     // Thin separator
@@ -1908,8 +1908,8 @@ fun NotíciasTab(news: List<NotíciasArticle>, isCarregando: Boolean, isNeo: Boo
                                             } else {
                                                 trendingQuery = topic
                                                 searchQuery = topic
-                                                aiCarregando = true; aiAnswer = ""
-                                                scope.launch { aiAnswer = smartNotíciasAnswer(topic, news); aiCarregando = false }
+                                                aiLoading = true; aiAnswer = ""
+                                                scope.launch { aiAnswer = smartNewsAnswer(topic, news); aiLoading = false }
                                             }
                                         }
                                         .padding(horizontal = 14.dp, vertical = 7.dp)
@@ -1952,7 +1952,7 @@ fun NotíciasTab(news: List<NotíciasArticle>, isCarregando: Boolean, isNeo: Boo
                     }
                 }
                 item {
-                    // Notícias cards block
+                    // News cards block
                     Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp))
                         .background(if (isNeo) Brush.linearGradient(listOf(Color(0xFF080E1C).copy(0.97f), Color(0xFF050A14).copy(0.97f)))
                                     else Brush.verticalGradient(listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surface)))
@@ -1963,7 +1963,7 @@ fun NotíciasTab(news: List<NotíciasArticle>, isCarregando: Boolean, isNeo: Boo
                             .background(Brush.horizontalGradient(listOf(Color.Transparent, neoBlue.copy(0.45f), Color.Transparent))))
                         Column(Modifier.padding(horizontal = 18.dp, vertical = 4.dp)) {
                             articles.forEachIndexed { idx, article ->
-                                NotíciasCard(article, isNeo) { onArticleClick(article.url) }
+                                NewsCard(article, isNeo) { onArticleClick(article.url) }
                                 if (idx < articles.lastIndex)
                                     HorizontalDivider(color = if (isNeo) neoBlue.copy(0.1f) else MaterialTheme.colorScheme.outline.copy(0.25f), thickness = 0.5.dp)
                             }
@@ -1987,7 +1987,7 @@ fun NotíciasTab(news: List<NotíciasArticle>, isCarregando: Boolean, isNeo: Boo
                 Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 11.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(if (aiCarregando) "⚡" else "\uD83D\uDD0D", fontSize = 16.sp)
+                    Text(if (aiLoading) "⚡" else "\uD83D\uDD0D", fontSize = 16.sp)
                     androidx.compose.foundation.text.BasicTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
@@ -2002,21 +2002,21 @@ fun NotíciasTab(news: List<NotíciasArticle>, isCarregando: Boolean, isNeo: Boo
                             Box { if (searchQuery.isEmpty()) Text("Pergunte sobre as notícias de hoje...", fontSize = 13.sp,
                                 color = if (isNeo) neoMuted else MaterialTheme.colorScheme.onSurfaceVariant); inner() }
                         },
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Pesquisar),
-                        keyboardActions = androidx.compose.foundation.text.KeyboardActions(onPesquisar = {
-                            if (searchQuery.isNotBlank() && !aiCarregando) {
-                                val q = searchQuery; aiCarregando = true; aiAnswer = ""
-                                scope.launch { aiAnswer = smartNotíciasAnswer(q, news); aiCarregando = false }
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Search),
+                        keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = {
+                            if (searchQuery.isNotBlank() && !aiLoading) {
+                                val q = searchQuery; aiLoading = true; aiAnswer = ""
+                                scope.launch { aiAnswer = smartNewsAnswer(q, news); aiLoading = false }
                             }
                         })
                     )
                     Box(Modifier.size(36.dp).clip(CircleShape)
                         .background(if (isNeo) Brush.linearGradient(listOf(neoBlue, neoPurple))
                                     else Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary)))
-                        .clickable(enabled = searchQuery.isNotBlank() && !aiCarregando) {
+                        .clickable(enabled = searchQuery.isNotBlank() && !aiLoading) {
                             if (searchQuery.isNotBlank()) {
-                                val q = searchQuery; aiCarregando = true; aiAnswer = ""
-                                scope.launch { aiAnswer = smartNotíciasAnswer(q, news); aiCarregando = false }
+                                val q = searchQuery; aiLoading = true; aiAnswer = ""
+                                scope.launch { aiAnswer = smartNewsAnswer(q, news); aiLoading = false }
                             }
                         }, Alignment.Center) {
                         Text("↑", fontSize = 15.sp, color = Color.White, fontWeight = FontWeight.ExtraBold)
@@ -2029,7 +2029,7 @@ fun NotíciasTab(news: List<NotíciasArticle>, isCarregando: Boolean, isNeo: Boo
 
 // ─── UPGRADED NEWS CARD ───────────────────────────────────────────────
 @Composable
-fun NotíciasCard(article: NotíciasArticle, isNeo: Boolean = false, onClick: () -> Unit) {
+fun NewsCard(article: NewsArticle, isNeo: Boolean = false, onClick: () -> Unit) {
     val neoBlue  = Color(0xFF22D3EE)
     val neoText  = Color(0xFFE2E8F0)
     val neoMuted = Color(0xFF94A3B8)
@@ -2069,17 +2069,17 @@ fun NotíciasCard(article: NotíciasArticle, isNeo: Boolean = false, onClick: ()
 }
 
 // ─── SMART NEWS AI: DuckDuckGo Instant + Wikipedia + Rule-based ─────────
-// ─── SMART AI: DuckDuckGo + Wikipedia Pesquisar + Wikipedia Resumo + Notícias ──
+// ─── SMART AI: DuckDuckGo + Wikipedia Search + Wikipedia Summary + News ──
 //
 // Pipeline (all free, no API key):
 //  1. DuckDuckGo Instant Answer  → direct facts, calculator, conversions
-//  2. Wikipedia OpenPesquisar       → find the canonical page title for the query
+//  2. Wikipedia OpenSearch       → find the canonical page title for the query
 //  3. Wikipedia REST summary     → fetch intro paragraph of that page
 //  4. DuckDuckGo Related Topics  → fallback entity info
 //  5. Loaded news headlines      → match & cite today's articles
 //  Offline fallback: rule-based scoring over loaded news
 // ─────────────────────────────────────────────────────────────────────────
-suspend fun smartNotíciasAnswer(query: String, news: List<NotíciasArticle>): String =
+suspend fun smartNewsAnswer(query: String, news: List<NewsArticle>): String =
     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
 
         fun get(urlStr: String, timeoutMs: Int = 5000): org.json.JSONObject? = try {
@@ -2104,10 +2104,10 @@ suspend fun smartNotíciasAnswer(query: String, news: List<NotíciasArticle>): S
 
         fun encode(s: String) = java.net.URLEncoder.encode(s, "UTF-8")
 
-        val newsHit   = ruleBasedNotíciasAnswer(query, news)
-        val hasNotícias   = !newsHit.startsWith("No matches") && !newsHit.startsWith("No articles") &&
+        val newsHit   = ruleBasedNewsAnswer(query, news)
+        val hasNews   = !newsHit.startsWith("No matches") && !newsHit.startsWith("No articles") &&
                         !newsHit.startsWith("No articles")
-        val newsSnip  = if (hasNotícias) "\n\n📰 From today's news: $newsHit" else ""
+        val newsSnip  = if (hasNews) "\n\n📰 From today's news: $newsHit" else ""
 
         // ── Step 1: DuckDuckGo Instant Answer ─────────────────────────────
         val ddgJson = get("https://api.duckduckgo.com/?q=${encode(query)}&format=json&no_html=1&skip_disambig=1")
@@ -2156,18 +2156,18 @@ suspend fun smartNotíciasAnswer(query: String, news: List<NotíciasArticle>): S
                 return@withContext "${definition.take(260)}$srcLbl$newsSnip"
             }
 
-            // Relacionado apics fallback
+            // Related topics fallback
             val related = ddgJson.optJSONArray("RelatedTopics")
             if (related != null && related.length() > 0) {
                 val tips = (0 until minOf(related.length(), 3)).mapNotNull { i ->
                     related.optJSONObject(i)?.optString("Text", "")?.trim()
                         ?.takeIf { it.length > 20 }?.take(120)
                 }.joinToString("\n• ", prefix = "• ")
-                if (tips.isNotBlank()) return@withContext "Relacionado a \"$query\":\n$tips$newsSnip"
+                if (tips.isNotBlank()) return@withContext "Related to \"$query\":\n$tips$newsSnip"
             }
         }
 
-        // ── Step 2: Wikipedia OpenPesquisar → find canonical title ────────────
+        // ── Step 2: Wikipedia OpenSearch → find canonical title ────────────
         val searchArr = getArr("https://en.wikipedia.org/w/api.php?action=opensearch&search=${encode(query)}&limit=1&namespace=0&format=json")
         val wikiTitle = if (searchArr != null && searchArr.length() > 1) {
             val titles = searchArr.optJSONArray(1)
@@ -2216,7 +2216,7 @@ suspend fun smartNotíciasAnswer(query: String, news: List<NotíciasArticle>): S
 
 
 // ─── WEATHER INSIGHT (no API key) ─────────────────────────────────────────
-fun buildClimaInsight(weather: com.kakao.taxi.data.model.ClimaData): String {
+fun buildWeatherInsight(weather: com.kakao.taxi.data.model.WeatherData): String {
     val sb = StringBuilder()
     val temp   = weather.temperature.toInt()
     val feels  = weather.feelsLike.toInt()
@@ -2243,7 +2243,7 @@ fun buildClimaInsight(weather: com.kakao.taxi.data.model.ClimaData): String {
         sb.append(" Sensação térmica de ${if (feels < temp) "$feels°C por causa do vento" else "$feels°C por causa da umidade"}.")
     }
 
-    // Chuva advice
+    // Rain advice
     if (rain >= 70) sb.append(" 🌧️ Alta chance de chuva ($rain%) — leve um guarda-chuva.")
     else if (rain >= 40) sb.append(" 🌦️ Pode chover ($rain%) — deixe um guarda-chuva à mão.")
 
@@ -2256,11 +2256,11 @@ fun buildClimaInsight(weather: com.kakao.taxi.data.model.ClimaData): String {
         }
     }
 
-    // Vento advice
+    // Wind advice
     if (wind >= 50) sb.append(" 💨 Ventos fortes ($wind km/h) — prenda objetos soltos.")
     else if (wind >= 30) sb.append(" 🍃 Brisa agradável ($wind km/h) — bom para caminhar.")
 
-    // Umidade comfort
+    // Humidity comfort
     if (humid >= 80 && temp >= 25) sb.append(" 💧 A umidade alta aumenta a sensação de abafamento — beba água.")
     else if (humid < 30) sb.append(" 🏜️ A umidade está baixa — hidrate a pele e beba mais água.")
 
@@ -2307,14 +2307,14 @@ fun buildHealthTip(steps: Int, sleepH: Float, water: Int, hour: Int): String {
     // Priority order: most urgent issue first
     val tips = mutableListOf<String>()
 
-    // Sono
+    // Sleep
     when {
         sleepH in 0.1f..4.9f -> tips.add("😴 You got ${sleepH.toInt()}h of sleep — less than 5h impairs focus. Try to nap or sleep earlier tonight.")
         sleepH in 5f..6f      -> tips.add("🌙 ${sleepH.toInt()}h sleep detected. Aim for 7–8h tonight for better recovery.")
         sleepH >= 9f          -> tips.add("🛌 Over 9h of sleep may indicate fatigue. Consistent 7–8h is ideal.")
     }
 
-    // Hidratação relative to time of day
+    // Hydration relative to time of day
     val expectedWater = when {
         hour < 10  -> 2
         hour < 14  -> 4
@@ -2324,7 +2324,7 @@ fun buildHealthTip(steps: Int, sleepH: Float, water: Int, hour: Int): String {
     if (water < expectedWater - 1)
         tips.add("💧 You've had $water glasses but should have ~$expectedWater by now. Drink a glass soon!")
 
-    // Passos
+    // Steps
     when {
         steps in 1..2000 && hour >= 12 -> tips.add("🚶 Only $steps steps so far. A short 10-min walk now adds ~1,000 steps.")
         steps in 2001..5000 && hour >= 15 -> tips.add("👟 Halfway to 8k steps. A 20-min walk will get you there!")
@@ -2333,10 +2333,10 @@ fun buildHealthTip(steps: Int, sleepH: Float, water: Int, hour: Int): String {
 
     // Time-of-day tip
     val timeTip = when (hour) {
-        in 6..8   -> "🌅 Dica da manhã: 10 minutos de luz solar ajudam a regular o sono e o humor."
+        in 6..8   -> "🌅 Morning tip: 10 min of sunlight exposure boosts serotonin and sets your sleep cycle."
         in 12..13 -> "🥗 Lunch time: a protein-rich meal sustains energy better than high-carb options."
-        in 14..16 -> "😪 Tarde slump? A 20-min nap or brisk walk beats coffee for sustained alertness."
-        in 21..23 -> "📵 Vento-down hour: dim lights and avoid screens 30 min before bed for better sleep quality."
+        in 14..16 -> "😪 Afternoon slump? A 20-min nap or brisk walk beats coffee for sustained alertness."
+        in 21..23 -> "📵 Wind-down hour: dim lights and avoid screens 30 min before bed for better sleep quality."
         else      -> ""
     }
     if (timeTip.isNotBlank()) tips.add(timeTip)
@@ -2350,7 +2350,7 @@ fun buildHealthTip(steps: Int, sleepH: Float, water: Int, hour: Int): String {
 }
 
 // ─── TRENDING TOPICS extractor ────────────────────────────────────────────
-fun extractTrendingTopics(news: List<com.kakao.taxi.data.model.NotíciasArticle>): List<String> {
+fun extractTrendingTopics(news: List<com.kakao.taxi.data.model.NewsArticle>): List<String> {
     if (news.isEmpty()) return emptyList()
     val stopWords = setOf(
         "the","a","an","and","or","but","in","on","at","to","for","of","with","as","is","are","was","were",
@@ -2381,7 +2381,7 @@ fun extractTrendingTopics(news: List<com.kakao.taxi.data.model.NotíciasArticle>
 }
 
 // ─── RULE-BASED NEWS AI (works offline, no quota) ─────────────────────
-fun ruleBasedNotíciasAnswer(query: String, news: List<NotíciasArticle>): String {
+fun ruleBasedNewsAnswer(query: String, news: List<NewsArticle>): String {
     if (news.isEmpty()) return "Nenhum artigo carregado ainda. Puxe para atualizar."
     val q = query.lowercase().trim()
     if (q.contains("how many") || q.startsWith("count")) {
@@ -2404,7 +2404,7 @@ fun ruleBasedNotíciasAnswer(query: String, news: List<NotíciasArticle>): Strin
         val latest = top.joinToString(" | ") { "${it.title} — ${it.source}" }
         return "Latest: $latest"
     }
-    data class Hit(val article: NotíciasArticle, val score: Int)
+    data class Hit(val article: NewsArticle, val score: Int)
     val hits = news.mapNotNull { a ->
         val score = tokens.sumOf { tok ->
             when {
@@ -2445,7 +2445,7 @@ fun ruleBasedNotíciasAnswer(query: String, news: List<NotíciasArticle>): Strin
 // ─── TAB 4: VITALS
 
 // ═══════════════════════════════════════════════════════════════════════
-// TAB 4: VITALS  (Passos + Screen Time)
+// TAB 4: VITALS  (Steps + Screen Time)
 // ═══════════════════════════════════════════════════════════════════════
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -2507,7 +2507,7 @@ private fun isSystemApp(pm: android.content.pm.PackageManager, pkg: String): Boo
  * Sums ACTIVITY_RESUMED→ACTIVITY_PAUSED pairs per package since midnight.
  * Filters out launchers, system UI, and other non-user apps.
  */
-private fun getScreenTimeHoje(context: Context): Pair<Long, List<AppUsage>> {
+private fun getScreenTimeToday(context: Context): Pair<Long, List<AppUsage>> {
     val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager
         ?: return Pair(0L, emptyList())
     val pm = context.packageManager
@@ -2732,7 +2732,7 @@ private fun AppUsageBar(app: AppUsage, maxMinutes: Long, index: Int) {
 fun rememberStepCount(): Int {
     val context   = LocalContext.current
     var cumulative by remember { mutableStateOf(-1L) }
-    var dailyPassos by remember { mutableStateOf(0) }
+    var dailySteps by remember { mutableStateOf(0) }
     val dataStoreRepo = remember { DataStoreRepository(context.dataStore) }
     val scope = rememberCoroutineScope()
 
@@ -2745,8 +2745,8 @@ fun rememberStepCount(): Int {
                 if (raw == cumulative) return
                 cumulative = raw
                 scope.launch {
-                    val daily = dataStoreRepo.getDailyPassos(raw)
-                    dailyPassos = daily.toInt().coerceAtLeast(0)
+                    val daily = dataStoreRepo.getDailySteps(raw)
+                    dailySteps = daily.toInt().coerceAtLeast(0)
                 }
             }
             override fun onAccuracyChanged(s: Sensor, a: Int) {}
@@ -2754,13 +2754,13 @@ fun rememberStepCount(): Int {
         if (sensor != null) sm.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
         onDispose { sm?.unregisterListener(listener) }
     }
-    return dailyPassos
+    return dailySteps
 }
 
-// ── Main SaúdeTab ─────────────────────────────────────────────────────
+// ── Main VitalsTab ─────────────────────────────────────────────────────
 
 @Composable
-fun SaúdeTab() {
+fun VitalsTab() {
     val context = LocalContext.current
     val hasActivity = remember {
         ContextCompat.checkSelfPermission(context, Manifest.permission.ACTIVITY_RECOGNITION) ==
@@ -2784,9 +2784,9 @@ fun SaúdeTab() {
     val hcEverGrantedFlow = remember { dataStoreRepo.isHcGranted }
     val hcEverGranted by hcEverGrantedFlow.collectAsStateWithLifecycle(initialValue = false)
 
-    // ── Sono state — must be declared BEFORE hcPermLauncher (used in its callback) ──
-    var estimatedSonoH   by remember { mutableStateOf(0f) }
-    var isSonoingNow     by remember { mutableStateOf(false) }
+    // ── Sleep state — must be declared BEFORE hcPermLauncher (used in its callback) ──
+    var estimatedSleepH   by remember { mutableStateOf(0f) }
+    var isSleepingNow     by remember { mutableStateOf(false) }
     var sleepSessionStart by remember { mutableStateOf(0L) }
 
     // HC permission launcher per guide Step 4:
@@ -2799,23 +2799,23 @@ fun SaúdeTab() {
                 dataStoreRepo.setHcGranted(true)   // persist — survives restart
                 hcSnap = healthAggregator.getBestHealthSnapshot()
                 hcSnap?.sleep?.primary?.let { s ->
-                    if (s.actualMinutes > 0) estimatedSonoH = s.actualMinutes / 60f
+                    if (s.actualMinutes > 0) estimatedSleepH = s.actualMinutes / 60f
                 }
             }
         }
     }
 
     // Sensor step fallback
-    val sensorPassos = if (hasActivity) rememberStepCount() else -1
+    val sensorSteps = if (hasActivity) rememberStepCount() else -1
 
     // Effective stepCount: HC if available, else sensor (-1 = no data)
     val stepCount: Int = when {
         hcSnap != null && (hcSnap!!.steps) >= 0L -> hcSnap!!.steps.toInt()
-        else -> sensorPassos
+        else -> sensorSteps
     }
 
     val (totalScreenMin, topApps) = remember {
-        if (hasUsage) getScreenTimeHoje(context) else Pair(0L, emptyList<AppUsage>())
+        if (hasUsage) getScreenTimeToday(context) else Pair(0L, emptyList<AppUsage>())
     }
 
     val hour: Int  = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
@@ -2835,7 +2835,7 @@ fun SaúdeTab() {
         val fresh = healthAggregator.getBestHealthSnapshot()
         if (fresh != null) {
             hcSnap = fresh
-            fresh.sleep?.primary?.let { s -> if (s.actualMinutes > 0) estimatedSonoH = s.actualMinutes / 60f }
+            fresh.sleep?.primary?.let { s -> if (s.actualMinutes > 0) estimatedSleepH = s.actualMinutes / 60f }
         }
     }
     LaunchedEffect(Unit) { checkAndLoadHc() }
@@ -2847,9 +2847,9 @@ fun SaúdeTab() {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // ── Sono onboarding state ─────────────────────────────────────────
+    // ── Sleep onboarding state ─────────────────────────────────────────
     var sleepOnboardDone      by remember { mutableStateOf(true) }   // assume done; LaunchedEffect corrects
-    var showSonoOnboard      by remember { mutableStateOf(false) }
+    var showSleepOnboard      by remember { mutableStateOf(false) }
     var sleepTargetHours      by remember { mutableStateOf(7.5f) }   // NIGHT goal
     var sleepNapTargetHours   by remember { mutableStateOf(1.5f) }   // NAP goal
     var sleepBehaviors        by remember { mutableStateOf(listOf<String>()) }
@@ -2863,13 +2863,13 @@ fun SaúdeTab() {
     var sleepBehaviorsNone    by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        sleepOnboardDone = dataStoreRepo.isSonoOnboardDone()
-        if (!sleepOnboardDone) showSonoOnboard = true
-        val (nightGoal, napGoal, behaviors) = dataStoreRepo.loadSonoOnboarding()
+        sleepOnboardDone = dataStoreRepo.isSleepOnboardDone()
+        if (!sleepOnboardDone) showSleepOnboard = true
+        val (nightGoal, napGoal, behaviors) = dataStoreRepo.loadSleepOnboarding()
         sleepTargetHours     = nightGoal
         sleepNapTargetHours  = napGoal
         sleepBehaviors       = behaviors
-        val noneChosen       = behaviors.isEmpty() && dataStoreRepo.isSonoOnboardDone()
+        val noneChosen       = behaviors.isEmpty() && dataStoreRepo.isSleepOnboardDone()
         sleepBehaviorsNone   = noneChosen
         // Restore wizard state so re-opening shows the saved selection
         sleepOnboardTarget    = nightGoal
@@ -2882,8 +2882,8 @@ fun SaúdeTab() {
     }
 
     // Effective sleep goal depends on HC mode
-    val effectiveSonoGoal: Float = when (hcSnap?.sleep?.mode) {
-        com.kakao.taxi.data.repository.HealthConnectRepository.SonoDisplayMode.TODAY_NAP -> sleepNapTargetHours
+    val effectiveSleepGoal: Float = when (hcSnap?.sleep?.mode) {
+        com.kakao.taxi.data.repository.HealthConnectRepository.SleepDisplayMode.TODAY_NAP -> sleepNapTargetHours
         else -> sleepTargetHours
     }
 
@@ -2912,31 +2912,31 @@ fun SaúdeTab() {
 
     LaunchedEffect(Unit) {
         // ── P1: live session already active ──────────────────────────
-        val sessionActive = dataStoreRepo.isSonoSessionActive()
-        val sessionStart  = dataStoreRepo.getSonoSessionStart()
+        val sessionActive = dataStoreRepo.isSleepSessionActive()
+        val sessionStart  = dataStoreRepo.getSleepSessionStart()
         if (sessionActive && sessionStart > 0L) {
             val elapsedH = (System.currentTimeMillis() - sessionStart) / (1000f * 60 * 60)
             if (elapsedH < 16f) {
-                isSonoingNow     = true
+                isSleepingNow     = true
                 sleepSessionStart = sessionStart
-                estimatedSonoH   = elapsedH
+                estimatedSleepH   = elapsedH
                 return@LaunchedEffect
             } else {
-                dataStoreRepo.endSonoSession(System.currentTimeMillis())
+                dataStoreRepo.endSleepSession(System.currentTimeMillis())
             }
         }
 
         // ── P2: completed session from history ────────────────────────
-        val todaySaved = dataStoreRepo.loadHojeSonoHours()
+        val todaySaved = dataStoreRepo.loadTodaySleepHours()
         if (todaySaved > 0f) {
-            estimatedSonoH = todaySaved
+            estimatedSleepH = todaySaved
             return@LaunchedEffect
         }
 
         // ── P3: heuristic scoring from UsageStats ─────────────────────
         if (!hasUsage) {
             // No usage permission → rough time-of-day estimate only
-            estimatedSonoH = when {
+            estimatedSleepH = when {
                 hour in 6..9   -> sleepTargetHours
                 hour in 10..13 -> (sleepTargetHours - 0.5f).coerceAtLeast(0f)
                 else           -> 0f
@@ -2967,7 +2967,7 @@ fun SaúdeTab() {
             } catch (_: Exception) { false }
 
             // ── Build all candidate gaps ──────────────────────────────
-            data class SonoGap(val offMs: Long, val onMs: Long, val hours: Float, val score: Int)
+            data class SleepGap(val offMs: Long, val onMs: Long, val hours: Float, val score: Int)
 
             val cal = Calendar.getInstance()
 
@@ -3023,18 +3023,18 @@ fun SaúdeTab() {
                 }
 
                 // Signal: only gap in this night (consistent sleeper, not multiple short offs)
-                val sameNoiteGaps = offTimes.count { t ->
+                val sameNightGaps = offTimes.count { t ->
                     val c2 = Calendar.getInstance().also { it.timeInMillis = t }
                     val h2 = c2.get(Calendar.HOUR_OF_DAY)
                     (h2 in 20..23 || h2 in 0..6) && t != offMs &&
                     (onTimes.firstOrNull { it > t }?.let { on -> (on - t) / 3_600_000f > 0.5f } == true)
                 }
-                if (sameNoiteGaps == 0) score += 1
+                if (sameNightGaps == 0) score += 1
 
                 return score
             }
 
-            val candidates = mutableListOf<SonoGap>()
+            val candidates = mutableListOf<SleepGap>()
             for (offT in offTimes) {
                 cal.timeInMillis = offT
                 val offH = cal.get(Calendar.HOUR_OF_DAY)
@@ -3043,7 +3043,7 @@ fun SaúdeTab() {
                 val gapH = (nextOn - offT) / 3_600_000f
                 if (gapH < 1f || gapH > 14f) continue              // sanity: 1h–14h
                 val sc = scoreGap(offT, nextOn, gapH)
-                if (sc >= 3) candidates.add(SonoGap(offT, nextOn, gapH, sc))   // threshold: 3
+                if (sc >= 3) candidates.add(SleepGap(offT, nextOn, gapH, sc))   // threshold: 3
             }
 
             // ── Still sleeping? Screen off and no on-event yet ────────
@@ -3056,10 +3056,10 @@ fun SaúdeTab() {
                     if (elapsedH >= 1f && elapsedH < 14f) {
                         val sc = scoreGap(lastOff, nowMs, elapsedH)
                         if (sc >= 3) {
-                            dataStoreRepo.startSonoSession(lastOff)
-                            isSonoingNow     = true
+                            dataStoreRepo.startSleepSession(lastOff)
+                            isSleepingNow     = true
                             sleepSessionStart = lastOff
-                            estimatedSonoH   = elapsedH.coerceAtMost(14f)
+                            estimatedSleepH   = elapsedH.coerceAtMost(14f)
                             return@LaunchedEffect
                         }
                     }
@@ -3069,25 +3069,25 @@ fun SaúdeTab() {
             // ── Pick the highest-scored gap ───────────────────────────
             val best = candidates.maxByOrNull { it.score }
             if (best != null) {
-                dataStoreRepo.endSonoSession(best.onMs)
-                estimatedSonoH = best.hours.coerceAtMost(12f)
+                dataStoreRepo.endSleepSession(best.onMs)
+                estimatedSleepH = best.hours.coerceAtMost(12f)
             } else {
-                estimatedSonoH = 0f
+                estimatedSleepH = 0f
             }
-        } catch (_: Exception) { estimatedSonoH = 0f }
+        } catch (_: Exception) { estimatedSleepH = 0f }
     }
 
     // Live ticker: if currently sleeping, update elapsed time every minute
-    LaunchedEffect(isSonoingNow, sleepSessionStart) {
-        if (!isSonoingNow || sleepSessionStart == 0L) return@LaunchedEffect
+    LaunchedEffect(isSleepingNow, sleepSessionStart) {
+        if (!isSleepingNow || sleepSessionStart == 0L) return@LaunchedEffect
         while (true) {
             kotlinx.coroutines.delay(60_000L)
-            estimatedSonoH = ((System.currentTimeMillis() - sleepSessionStart) / (1000f * 60 * 60))
+            estimatedSleepH = ((System.currentTimeMillis() - sleepSessionStart) / (1000f * 60 * 60))
                 .coerceAtMost(16f)
         }
     }
 
-    // ── Hidratação: persisted to DataStore — survives app kill, resets at midnight ─
+    // ── Hydration: persisted to DataStore — survives app kill, resets at midnight ─
     var waterCups by remember { mutableStateOf<Int>(0) }
     LaunchedEffect(Unit) {
         waterCups = dataStoreRepo.loadWaterCups()
@@ -3097,11 +3097,11 @@ fun SaúdeTab() {
         coroutineScope.launch { dataStoreRepo.saveWaterCups(cups) }
     }
 
-    // ── Sono onboarding dialog (3-step wizard) ──────────────────────
-    // Step 0: Noite sleep goal
+    // ── Sleep onboarding dialog (3-step wizard) ──────────────────────
+    // Step 0: Night sleep goal
     // Step 1: Nap sleep goal
-    // Step 2: Sono habits / behaviors (with "None" option)
-    if (showSonoOnboard) {
+    // Step 2: Sleep habits / behaviors (with "None" option)
+    if (showSleepOnboard) {
         val nightOptions = listOf(6f, 6.5f, 7f, 7.5f, 8f, 8.5f, 9f)
         val napOptions   = listOf(0.5f, 1f, 1.5f, 2f, 2.5f, 3f)
         val behaviorOptions = listOf(
@@ -3118,9 +3118,9 @@ fun SaúdeTab() {
         val NONE_SENTINEL = "__none__"
 
         val stepTitle = when (sleepOnboardStep) {
-            0    -> "Meta de sono noturno"
+            0    -> "Night Sleep Goal"
             1    -> "Meta de soneca"
-            else -> "Hábitos de sono"
+            else -> "Sleep Habits"
         }
         val stepSubtitle = when (sleepOnboardStep) {
             0    -> "Quantas horas de sono noturno você pretende dormir?"
@@ -3158,7 +3158,7 @@ fun SaúdeTab() {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     when (sleepOnboardStep) {
                         0 -> {
-                            // Noite sleep goal chips
+                            // Night sleep goal chips
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp),
                                 verticalAlignment = Alignment.CenterVertically) {
                                 nightOptions.forEach { h ->
@@ -3284,21 +3284,21 @@ fun SaúdeTab() {
                             val behaviors   = if (isNone) emptyList()
                                              else sleepOnboardBehaviors.filter { it != NONE_SENTINEL }
                             coroutineScope.launch {
-                                dataStoreRepo.saveSonoOnboarding(nightGoal, behaviors, napGoal)
+                                dataStoreRepo.saveSleepOnboarding(nightGoal, behaviors, napGoal)
                             }
                             sleepTargetHours    = nightGoal
                             sleepNapTargetHours = napGoal
                             sleepBehaviors      = behaviors
                             sleepBehaviorsNone  = isNone
-                            showSonoOnboard    = false
+                            showSleepOnboard    = false
                         }
                     }
                 }, shape = RoundedCornerShape(12.dp)) {
-                    Text(when (sleepOnboardStep) { 0, 1 -> "Próximo →"; else -> "Concluído ✓" })
+                    Text(when (sleepOnboardStep) { 0, 1 -> "Next →"; else -> "Done ✓" })
                 }
             },
             dismissButton = if (sleepOnboardStep > 0) {
-                { TextButton(onClick = { sleepOnboardStep-- }) { Text("← Voltar") } }
+                { TextButton(onClick = { sleepOnboardStep-- }) { Text("← Back") } }
             } else null
         )
     }
@@ -3326,7 +3326,7 @@ fun SaúdeTab() {
             }
         }
 
-        // ── Saúde Insight digest ─────────────────────────────────────
+        // ── Vitals Insight digest ─────────────────────────────────────
         item {
             val stepStatus = when {
                 !hasActivity              -> null
@@ -3356,7 +3356,7 @@ fun SaúdeTab() {
             }
         }
 
-        // ── Three rings: Passos · Screen · Sono ───────────────────────
+        // ── Three rings: Steps · Screen · Sleep ───────────────────────
         item {
             LiquidGlassCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(horizontal = 16.dp, vertical = 20.dp),
@@ -3368,7 +3368,7 @@ fun SaúdeTab() {
                         verticalAlignment = Alignment.Top
                     ) {
 
-                        // Passos
+                        // Steps
                         Box(Modifier.weight(1f), contentAlignment = Alignment.TopCenter) {
                             VitalRingItem(
                                 progress  = stepFrac,
@@ -3385,7 +3385,7 @@ fun SaúdeTab() {
                         Box(Modifier.width(1.dp).height(140.dp).padding(top = 8.dp)
                             .background(MaterialTheme.colorScheme.outline.copy(0.15f)))
 
-                        // Tempo de tela
+                        // Screen time
                         val scrH = totalScreenMin / 60; val scrM = totalScreenMin % 60
                         Box(Modifier.weight(1f), contentAlignment = Alignment.TopCenter) {
                             VitalRingItem(
@@ -3399,7 +3399,7 @@ fun SaúdeTab() {
                                     else              -> Color(0xFF42A5F5)
                                 },
                                 enabled   = hasUsage,
-                                onEnable  = { context.startActivity(Intent(Configurações.ACTION_USAGE_ACCESS_SETTINGS)) }
+                                onEnable  = { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
                             )
                         }
 
@@ -3407,30 +3407,30 @@ fun SaúdeTab() {
                         Box(Modifier.width(1.dp).height(140.dp).padding(top = 8.dp)
                             .background(MaterialTheme.colorScheme.outline.copy(0.15f)))
 
-                        // Sono double ring — same weight(1f) as others
+                        // Sleep double ring — same weight(1f) as others
                         val sleepMode    = hcSnap?.sleep?.mode
                         val isHcNapMode  = (hcSnap?.sleep?.napCount ?: 0) > 0 &&
-                            sleepMode == com.kakao.taxi.data.repository.HealthConnectRepository.SonoDisplayMode.TODAY_NAP
-                        val isHeurNap    = !isHcNapMode && estimatedSonoH in 0.25f..3.99f && hour > 9
-                        val hcNoiteH     = hcSnap?.sleep?.primary?.actualMinutes?.let { if (it > 0) it / 60f else 0f } ?: 0f
-                        val nightSonoH  = if (isHcNapMode || isHeurNap) 0f else if (hcNoiteH > 0f) hcNoiteH else estimatedSonoH
+                            sleepMode == com.kakao.taxi.data.repository.HealthConnectRepository.SleepDisplayMode.TODAY_NAP
+                        val isHeurNap    = !isHcNapMode && estimatedSleepH in 0.25f..3.99f && hour > 9
+                        val hcNightH     = hcSnap?.sleep?.primary?.actualMinutes?.let { if (it > 0) it / 60f else 0f } ?: 0f
+                        val nightSleepH  = if (isHcNapMode || isHeurNap) 0f else if (hcNightH > 0f) hcNightH else estimatedSleepH
                         val nightColor   = when {
-                            isSonoingNow                           -> Color(0xFF5C6BC0)
-                            nightSonoH >= sleepTargetHours         -> Color(0xFF7C4DFF)
-                            nightSonoH >= sleepTargetHours * 0.7f  -> Color(0xFFFFA726)
-                            nightSonoH > 0f                        -> Color(0xFFEF5350)
+                            isSleepingNow                           -> Color(0xFF5C6BC0)
+                            nightSleepH >= sleepTargetHours         -> Color(0xFF7C4DFF)
+                            nightSleepH >= sleepTargetHours * 0.7f  -> Color(0xFFFFA726)
+                            nightSleepH > 0f                        -> Color(0xFFEF5350)
                             else                                    -> Color(0xFF7C4DFF)
                         }
-                        val nightFrac    = (nightSonoH / sleepTargetHours).coerceIn(0f, 1f)
+                        val nightFrac    = (nightSleepH / sleepTargetHours).coerceIn(0f, 1f)
                         val nightGoalS   = if (sleepTargetHours == sleepTargetHours.toLong().toFloat()) "${sleepTargetHours.toInt()}h" else "${sleepTargetHours}h"
                         val nightVal     = when {
-                            isSonoingNow   -> { val h=nightSonoH.toInt(); val m=((nightSonoH-h)*60).toInt(); if(m>0)"${h}h${m}m" else "${h}h" }
-                            nightSonoH>0f  -> "${"%.1f".format(nightSonoH)}h"
+                            isSleepingNow   -> { val h=nightSleepH.toInt(); val m=((nightSleepH-h)*60).toInt(); if(m>0)"${h}h${m}m" else "${h}h" }
+                            nightSleepH>0f  -> "${"%.1f".format(nightSleepH)}h"
                             else            -> "--"
                         }
                         val napHours     = when {
                             isHcNapMode -> hcSnap!!.sleep!!.todayNaps.sumOf { it.actualMinutes } / 60f
-                            isHeurNap   -> estimatedSonoH
+                            isHeurNap   -> estimatedSleepH
                             else        -> 0f
                         }
                         val hasNap       = isHcNapMode || isHeurNap
@@ -3438,11 +3438,11 @@ fun SaúdeTab() {
                         val napVal       = if (napHours > 0f) "${"%.1f".format(napHours)}h" else "--"
 
                         Box(Modifier.weight(1f), contentAlignment = Alignment.TopCenter) {
-                            SonoDoubleRing(
+                            SleepDoubleRing(
                                 nightProgress = nightFrac, nightValue = nightVal, nightColor = nightColor,
                                 napProgress   = napFrac,   napValue   = napVal,   hasNap      = hasNap,
-                                nightGoalStr  = nightGoalS, isSonoingNow = isSonoingNow,
-                                onEditGoal    = { showSonoOnboard = true; sleepOnboardStep = 0 }
+                                nightGoalStr  = nightGoalS, isSleepingNow = isSleepingNow,
+                                onEditGoal    = { showSleepOnboard = true; sleepOnboardStep = 0 }
                             )
                         }
                     }
@@ -3453,7 +3453,7 @@ fun SaúdeTab() {
             }
         }
 
-        // ── Quick stat chips: Calorias · Distância · Active ─────────────
+        // ── Quick stat chips: Calories · Distance · Active ─────────────
         item {
             val caloriesBurned = if (stepCount > 0) (stepCount * 0.04f).toInt() else 0
             val distanceKm     = if (stepCount > 0) stepCount * 0.00078f else 0f
@@ -3478,7 +3478,7 @@ fun SaúdeTab() {
             }
         }
 
-        // ── Hidratação tracker with +/- ─────────────────────────────────
+        // ── Hydration tracker with +/- ─────────────────────────────────
         item {
             LiquidGlassCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -3495,10 +3495,10 @@ fun SaúdeTab() {
                         }
                         val hydMsg = when {
                             waterCups >= 8 -> "\uD83C\uDF89 Goal met!"
-                            hour < 10      -> "Manhã — start hydrating"
+                            hour < 10      -> "Morning — start hydrating"
                             hour in 10..13 -> "Midday check"
-                            hour in 14..17 -> "Tarde boost"
-                            else           -> "Noite — wind down"
+                            hour in 14..17 -> "Afternoon boost"
+                            else           -> "Evening — wind down"
                         }
                         Text(hydMsg, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.7f))
                     }
@@ -3620,18 +3620,18 @@ fun SaúdeTab() {
         // ── Smart AI daily health tip ─────────────────────────────────
         item {
             var healthTip   by remember { mutableStateOf("") }
-            var tipCarregando  by remember { mutableStateOf(false) }
+            var tipLoading  by remember { mutableStateOf(false) }
             val tipScope    = rememberCoroutineScope()
 
-            LaunchedEffect(stepCount, estimatedSonoH, waterCups) {
-                tipCarregando = true
+            LaunchedEffect(stepCount, estimatedSleepH, waterCups) {
+                tipLoading = true
                 healthTip = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    buildHealthTip(stepCount, estimatedSonoH, waterCups, hour)
+                    buildHealthTip(stepCount, estimatedSleepH, waterCups, hour)
                 }
-                tipCarregando = false
+                tipLoading = false
             }
 
-            AnimatedVisibility(visible = healthTip.isNotBlank() || tipCarregando,
+            AnimatedVisibility(visible = healthTip.isNotBlank() || tipLoading,
                 enter = fadeIn() + expandVertically()) {
                 LiquidGlassCard(modifier = Modifier.fillMaxWidth()) {
                     Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -3640,7 +3640,7 @@ fun SaúdeTab() {
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                             Text("DICA DE SAÚDE DE HOJE", fontSize = 10.sp, fontWeight = FontWeight.Bold,
                                 letterSpacing = 0.8.sp, color = MaterialTheme.colorScheme.primary)
-                            if (tipCarregando)
+                            if (tipLoading)
                                 LinearProgressIndicator(Modifier.fillMaxWidth().height(2.dp).clip(RoundedCornerShape(50)),
                                     color = MaterialTheme.colorScheme.primary)
                             else if (healthTip.isNotBlank())
@@ -3714,10 +3714,10 @@ fun SaúdeTab() {
                                     hcSnap = null  // show loading state briefly
                                     hcSnap = healthAggregator.getBestHealthSnapshot()
                                     hcSnap?.sleep?.primary?.let { primary ->
-                                        if (primary.actualMinutes > 0) estimatedSonoH = primary.actualMinutes / 60f
+                                        if (primary.actualMinutes > 0) estimatedSleepH = primary.actualMinutes / 60f
                                     }
                                 }
-                            }) { Text("Atualizar", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f)) }
+                            }) { Text("Refresh", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f)) }
                         }
                     }
 
@@ -3725,22 +3725,22 @@ fun SaúdeTab() {
                     val snap = hcSnap
                     data class HcMetric(val emoji: String, val label: String, val value: String, val sending: Boolean)
                     val metrics = listOf(
-                        HcMetric("\uD83D\uDC5F", "Passos",
+                        HcMetric("\uD83D\uDC5F", "Steps",
                             if (snap != null && snap.steps >= 0) "${snap.steps}" else "--",
                             snap?.steps?.let { it >= 0 } == true),
-                        HcMetric("\u2764\uFE0F", "Frequência cardíaca",
+                        HcMetric("\u2764\uFE0F", "Heart Rate",
                             if (snap?.heartRate != null) "${snap.heartRate!!.latestBpm} bpm" else "--",
                             snap?.heartRate != null),
                         HcMetric("\uD83D\uDCA8", "SpO\u2082",
                             if (snap?.spO2 != null) "${"%.1f".format(snap.spO2!!)}%" else "--",
                             snap?.spO2 != null),
-                        HcMetric("\uD83D\uDECF\uFE0F", "Sono",
+                        HcMetric("\uD83D\uDECF\uFE0F", "Sleep",
                             if (snap?.sleep?.primary != null) "${"%.1f".format(snap.sleep!!.primary!!.actualMinutes / 60f)}h" else "--",
                             snap?.sleep != null),
-                        HcMetric("\uD83D\uDD25", "Calorias",
+                        HcMetric("\uD83D\uDD25", "Calories",
                             if (snap != null && snap.calories > 0) "${snap.calories.toInt()} kcal" else "--",
                             snap?.calories?.let { it > 0 } == true),
-                        HcMetric("\uD83D\uDCCD", "Distância",
+                        HcMetric("\uD83D\uDCCD", "Distance",
                             if (snap != null && snap.distanceKm > 0) "${"%.2f".format(snap.distanceKm)} km" else "--",
                             snap?.distanceKm?.let { it > 0 } == true),
                     )
@@ -3810,23 +3810,23 @@ fun SaúdeTab() {
                                     fontSize = 11.sp, lineHeight = 16.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                data class HcSrc(val emoji: String, val name: String, val setupPassos: String, val dataTypes: String, val pkg: String, val uri: String)
+                                data class HcSrc(val emoji: String, val name: String, val setupSteps: String, val dataTypes: String, val pkg: String, val uri: String)
                                 listOf(
                                     HcSrc("\uD83D\uDCCA","Google Fit",
-                                        "Profile → Configurações → Health Connect → Allow all",
-                                        "Passos · Calorias · Frequência cardíaca · Sono · Distância",
+                                        "Profile → Settings → Health Connect → Allow all",
+                                        "Steps · Calories · Heart Rate · Sleep · Distance",
                                         "com.google.android.apps.fitness","https://fit.google.com"),
                                     HcSrc("\u26A1","Samsung Health",
-                                        "Menu → Configurações → Connected services → Health Connect → Allow all",
-                                        "Passos · Sono stages · Frequência cardíaca · SpO₂ · Calorias",
+                                        "Menu → Settings → Connected services → Health Connect → Allow all",
+                                        "Steps · Sleep stages · Heart Rate · SpO₂ · Calories",
                                         "com.sec.android.app.shealth",""),
                                     HcSrc("\uD83D\uDC99","Fitbit",
-                                        "Hoje tab → ⚙ → Health Connect → Turn on & sync all",
-                                        "Passos · Sono · Frequência cardíaca · Calorias · Distância",
+                                        "Today tab → ⚙ → Health Connect → Turn on & sync all",
+                                        "Steps · Sleep · Heart Rate · Calories · Distance",
                                         "com.fitbit.FitbitMobile","fitbit://settings"),
                                     HcSrc("\uD83C\uDFC3","Strava",
-                                        "You → Configurações → Health Connect → Enable",
-                                        "Distância · Calorias · Minutos ativos",
+                                        "You → Settings → Health Connect → Enable",
+                                        "Distance · Calories · Active minutes",
                                         "com.strava",""),
                                 ).forEach { src ->
                                     val installed = try { context.packageManager.getPackageInfo(src.pkg, 0); true } catch (_: Exception) { false }
@@ -3881,7 +3881,7 @@ fun SaúdeTab() {
                                                 .padding(horizontal = 10.dp, vertical = 6.dp)) {
                                                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                                     Text("\uD83D\uDCCB", fontSize = 10.sp)
-                                                    Text(src.setupPassos, fontSize = 9.5.sp,
+                                                    Text(src.setupSteps, fontSize = 9.5.sp,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.7f),
                                                         lineHeight = 14.sp)
                                                 }
@@ -3894,7 +3894,7 @@ fun SaúdeTab() {
                                     .padding(horizontal = 10.dp, vertical = 7.dp),
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     Text("\u2139\uFE0F", fontSize = 12.sp)
-                                    Text("After syncing, tap Atualizar above. Data may take a few minutes to appear in Health Connect.",
+                                    Text("After syncing, tap Refresh above. Data may take a few minutes to appear in Health Connect.",
                                         fontSize = 10.sp, lineHeight = 14.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.65f))
                                 }
@@ -3922,7 +3922,7 @@ fun SaúdeTab() {
                                 Text(it, fontSize = 11.sp, lineHeight = 16.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            Text("\uD83D\uDCF1 Samsung: Configurações \u2192 Security \u2192 Auto Blocker \u2192 OFF",
+                            Text("\uD83D\uDCF1 Samsung: Settings \u2192 Security \u2192 Auto Blocker \u2192 OFF",
                                 fontSize = 11.sp, color = Color(0xFFFFA726),
                                 fontWeight = FontWeight.Medium)
                         }
@@ -4003,10 +4003,10 @@ fun SaúdeTab() {
                 }
             }
 
-            // ── Noite sleep card — always shown when HC connected ──────
+            // ── Night sleep card — always shown when HC connected ──────
             item {
                 @Composable
-                fun SonoStageRow(label: String, min: Long, color: Color, totalMin: Long) {
+                fun SleepStageRow(label: String, min: Long, color: Color, totalMin: Long) {
                     if (min <= 0L) return
                     val frac = (min.toFloat() / totalMin.coerceAtLeast(1)).coerceIn(0f, 1f)
                         Row(Modifier.fillMaxWidth(),
@@ -4043,10 +4043,10 @@ fun SaúdeTab() {
                                             val fmt = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault())
                                             Text("${fmt.format(java.util.Date(night.sessionStart!!.toEpochMilli()))} – ${fmt.format(java.util.Date(night.sessionEnd!!.toEpochMilli()))}",
                                                 fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f))
-                                        } else if (isSonoingNow) {
+                                        } else if (isSleepingNow) {
                                             Text("live session · screen-off gap",
                                                 fontSize = 10.sp, color = Color(0xFF5C6BC0).copy(0.8f))
-                                        } else if (estimatedSonoH > 0f) {
+                                        } else if (estimatedSleepH > 0f) {
                                             Text("native detection · no wearable needed",
                                                 fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.5f))
                                         }
@@ -4059,11 +4059,11 @@ fun SaúdeTab() {
                                             color = Color(0xFF7C4DFF))
                                         Text("${"%.1f".format(night.totalMinutes / 60f)}h in bed",
                                             fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f))
-                                    } else if (estimatedSonoH > 0f) {
-                                        Text("${"%.1f".format(estimatedSonoH)}h",
+                                    } else if (estimatedSleepH > 0f) {
+                                        Text("${"%.1f".format(estimatedSleepH)}h",
                                             fontSize = 13.sp, fontWeight = FontWeight.ExtraBold,
-                                            color = if (isSonoingNow) Color(0xFF5C6BC0) else Color(0xFF7C4DFF))
-                                        Text(if (isSonoingNow) "sleeping now" else "estimated",
+                                            color = if (isSleepingNow) Color(0xFF5C6BC0) else Color(0xFF7C4DFF))
+                                        Text(if (isSleepingNow) "sleeping now" else "estimated",
                                             fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f))
                                     } else {
                                         Text("...", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold,
@@ -4076,7 +4076,7 @@ fun SaúdeTab() {
                                 // HC has real sleep data — show efficiency + stages
                                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text("Sono efficiency", fontSize = 10.sp,
+                                        Text("Sleep efficiency", fontSize = 10.sp,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         val effColor = when {
                                             night.efficiency >= 85 -> Color(0xFF4CAF50)
@@ -4101,23 +4101,23 @@ fun SaúdeTab() {
                                 }
                                 if (night.hasStageData && (night.deepMinutes + night.remMinutes + night.lightMinutes) > 0) {
                                     HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(0.12f))
-                                    SonoStageRow("Deep",  night.deepMinutes,  Color(0xFF3F51B5), night.totalMinutes)
-                                    SonoStageRow("REM",   night.remMinutes,   Color(0xFF9C27B0), night.totalMinutes)
-                                    SonoStageRow("Light", night.lightMinutes, Color(0xFF5C6BC0), night.totalMinutes)
+                                    SleepStageRow("Deep",  night.deepMinutes,  Color(0xFF3F51B5), night.totalMinutes)
+                                    SleepStageRow("REM",   night.remMinutes,   Color(0xFF9C27B0), night.totalMinutes)
+                                    SleepStageRow("Light", night.lightMinutes, Color(0xFF5C6BC0), night.totalMinutes)
                                     if (night.awakMinutes > 0)
-                                        SonoStageRow("Awake", night.awakMinutes, Color(0xFFFF9800), night.totalMinutes)
+                                        SleepStageRow("Awake", night.awakMinutes, Color(0xFFFF9800), night.totalMinutes)
                                 } else {
                                     HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(0.12f))
-                                    SonoStageRow("Sono", night.actualMinutes, Color(0xFF7C4DFF), night.totalMinutes)
+                                    SleepStageRow("Sleep", night.actualMinutes, Color(0xFF7C4DFF), night.totalMinutes)
                                     if (night.totalMinutes > night.actualMinutes)
-                                        SonoStageRow("In bed", night.totalMinutes - night.actualMinutes, Color(0xFF455A64), night.totalMinutes)
+                                        SleepStageRow("In bed", night.totalMinutes - night.actualMinutes, Color(0xFF455A64), night.totalMinutes)
                                 }
                             } else {
                                 // ── Native scoring fallback — never show "no data" ──────────
-                                // Uses estimatedSonoH + isSonoingNow from the screen-off
+                                // Uses estimatedSleepH + isSleepingNow from the screen-off
                                 // gap scoring engine (no Samsung Health required)
-                                val nativeH   = estimatedSonoH
-                                val sleeping  = isSonoingNow
+                                val nativeH   = estimatedSleepH
+                                val sleeping  = isSleepingNow
                                 val nativeFrac = (nativeH / sleepTargetHours).coerceIn(0f, 1f)
                                 val nativeMin = (nativeH * 60).toLong()
                                 val goalMin   = (sleepTargetHours * 60).toLong()
@@ -4161,14 +4161,14 @@ fun SaúdeTab() {
                                     HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(0.12f))
 
                                     // Native sleep bar (treated as single block — no stage data)
-                                    SonoStageRow(
-                                        label = if (sleeping) "Active" else "Sono",
+                                    SleepStageRow(
+                                        label = if (sleeping) "Active" else "Sleep",
                                         min   = nativeMin,
                                         color = if (sleeping) Color(0xFF5C6BC0) else Color(0xFF7C4DFF),
                                         totalMin = goalMin.coerceAtLeast(nativeMin)
                                     )
                                     if (!sleeping && nativeMin < goalMin) {
-                                        SonoStageRow(
+                                        SleepStageRow(
                                             label    = "Deficit",
                                             min      = goalMin - nativeMin,
                                             color    = Color(0xFF455A64),
@@ -4240,7 +4240,7 @@ fun SaúdeTab() {
                 }
             }
 
-            // Calorias + Distância from HC
+            // Calories + Distance from HC
             if (snap.calories > 0 || snap.distanceKm > 0) {
                 item {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -4287,7 +4287,7 @@ fun SaúdeTab() {
                             activityLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
                         }
                         if (!hasUsage) PermissionRow("\uD83D\uDCF1", "Usage Access", "Track screen time & sleep") {
-                            context.startActivity(Intent(Configurações.ACTION_USAGE_ACCESS_SETTINGS))
+                            context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
                         }
                     }
                 }
@@ -4393,7 +4393,7 @@ private fun PermissionRow(emoji: String, title: String, sub: String, onGrant: ()
 
 // ─── SHARED ───────────────────────────────────────────────────────────
 @Composable
-fun WarmCarregandoScreen(message: String) {
+fun WarmLoadingScreen(message: String) {
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary, strokeWidth = 3.dp)
