@@ -557,7 +557,7 @@ fun TopHeader(isCarregando: Boolean, cityName: String, lastUpdated: Long, isNeo:
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         modifier = Modifier.size(12.dp))
                 }
-                Text(cityName.ifBlank { "Your Location" }, fontSize = 12.sp,
+                Text(cityName.ifBlank { "Sua localização" }, fontSize = 12.sp,
                     color = if (isNeo) Color(0xFF94A3B8) else MaterialTheme.colorScheme.onSurfaceVariant.copy(0.7f))
             }
         }
@@ -761,23 +761,23 @@ fun TabPills(tabs: List<String>, selected: Int, isNeo: Boolean, onSelect: (Int) 
 // ─── TAB 1: SUMMARY ───────────────────────────────────────────────────
 @Composable
 fun ResumoTab(state: BriefState, onAtualizar: () -> Unit) {
-    if (state.isCarregando && state.lastUpdated == 0L) { WarmCarregandoScreen("Crafting your brief..."); return }
+    if (state.isCarregando && state.lastUpdated == 0L) { WarmCarregandoScreen("Preparando seu resumo..."); return }
     AuroraBackground(Modifier.fillMaxSize()) {
     LazyColumn(Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
         item {
-            Text(state.summary.greeting.ifBlank { "Hello" }, fontSize = 36.sp,
+            Text(state.summary.greeting.ifBlank { "Olá" }, fontSize = 36.sp,
                 fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary,
                 lineHeight = 42.sp, modifier = Modifier.padding(bottom = 2.dp))
         }
         if (state.summary.dayResumo.isNotBlank())
-            item { AIResumoCard("YOUR DAY AT A GLANCE", "\uD83C\uDF05", state.summary.dayResumo, MaterialTheme.colorScheme.primary) }
+            item { AIResumoCard("SEU DIA EM RESUMO", "\uD83C\uDF05", state.summary.dayResumo, MaterialTheme.colorScheme.primary) }
         if (state.weather.cityName != "Unknown" && state.weather.temperature != 0.0)
             item { ResumoClimaInsightCard(state.weather) }
         if (state.summary.newsResumo.isNotBlank())
-            item { AIResumoCard("NEWS DIGEST", "\uD83D\uDCF0", state.summary.newsResumo, Color(0xFF2196F3)) }
+            item { AIResumoCard("RESUMO DE NOTÍCIAS", "\uD83D\uDCF0", state.summary.newsResumo, Color(0xFF2196F3)) }
         item { ResumoSaúdeDigestCard() }
         if (state.summary.quote.isNotBlank())
             item { QuoteCard(state.summary.quote) }
@@ -786,7 +786,7 @@ fun ResumoTab(state: BriefState, onAtualizar: () -> Unit) {
         if (focus != null && focus.goal.isNotBlank()) item {
             LiquidGlassCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("TODAY'S FOCUS", fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                    Text("FOCO DE HOJE", fontSize = 11.sp, fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp, color = MaterialTheme.colorScheme.primary)
                     Text(focus.goal, fontSize = 18.sp, fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer)
@@ -813,7 +813,7 @@ fun ResumoTab(state: BriefState, onAtualizar: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(state.weather.airQualityEmoji, fontSize = 16.sp)
-                Text("Air: ${state.weather.airQualityLabel}  |  Rise ${state.weather.sunrise}  Set ${state.weather.sunset}",
+                Text("Qualidade do ar: ${state.weather.airQualityLabel}  |  Nascer do sol ${state.weather.sunrise}  Pôr do sol ${state.weather.sunset}",
                     fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
             }
         }
@@ -845,7 +845,7 @@ fun ClimaResumoCard(weatherResumo: String, weatherAdvice: String, icon: String) 
             Box(Modifier.size(48.dp).background(MaterialTheme.colorScheme.surface, RoundedCornerShape(14.dp)),
                 contentAlignment = Alignment.Center) { Text(icon, fontSize = 24.sp) }
             Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.weight(1f)) {
-                Text("TODAY'S WEATHER", fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                Text("CLIMA DE HOJE", fontSize = 10.sp, fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), letterSpacing = 1.sp)
                 if (weatherResumo.isNotBlank())
                     Text(weatherResumo, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface, lineHeight = 20.sp)
@@ -882,7 +882,7 @@ fun ResumoClimaInsightCard(weather: com.kakao.taxi.data.model.ClimaData) {
                 Row(verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("\uD83E\uDDE0", fontSize = 13.sp)
-                    Text("WEATHER INSIGHT", fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                    Text("DESTAQUE DO CLIMA", fontSize = 10.sp, fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp, color = MaterialTheme.colorScheme.primary)
                 }
                 Text(insight, fontSize = 13.sp, lineHeight = 20.sp,
@@ -916,7 +916,7 @@ fun ResumoSaúdeDigestCard() {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically) {
                 Text("\uD83D\uDC9A", fontSize = 16.sp)
-                Text("VITALS AT A GLANCE", fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                Text("SAÚDE EM RESUMO", fontSize = 10.sp, fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp, color = Color(0xFF4CAF50))
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
@@ -966,7 +966,7 @@ fun MusicCard(music: MusicRecommendation) {
     val tags = music.mood.split(" \u00b7 ", " / ", ", ").map { it.trim() }.filter { it.isNotBlank() }
     val context = LocalContext.current
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("MUSIC FOR YOUR MOOD", fontSize = 11.sp, fontWeight = FontWeight.Bold,
+        Text("MÚSICA PARA SEU HUMOR", fontSize = 11.sp, fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
         LiquidGlassCard(modifier = Modifier.fillMaxWidth().clickable {
                 val q = Uri.encode("${music.title} ${music.artist}")
@@ -996,7 +996,7 @@ fun MusicCard(music: MusicRecommendation) {
                         }
                     }
                 }
-                Icon(Icons.Filled.PlayArrow, "Open in Spotify",
+                Icon(Icons.Filled.PlayArrow, "Abrir no Spotify",
                     tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
             }
         }
@@ -1025,7 +1025,7 @@ fun ErrorCard(error: String, onRetry: () -> Unit) {
             Text("Couldn't load data", fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.error)
             Text(error, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            TextButton(onRetry) { Text("Retry", color = MaterialTheme.colorScheme.primary) }
+            TextButton(onRetry) { Text("Tentar novamente", color = MaterialTheme.colorScheme.primary) }
         }
     }
 }
@@ -1593,7 +1593,7 @@ fun SunArcCard(sunrise: String, sunset: String) {
 fun ClimaTab(weather: ClimaData, isCarregando: Boolean) {
     val hasData = weather.cityName != "Unknown" && weather.temperature != 0.0
     if (!hasData) {
-        if (isCarregando) { WarmCarregandoScreen("Fetching weather..."); return }
+        if (isCarregando) { WarmCarregandoScreen("Buscando previsão do tempo..."); return }
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), Alignment.Center) {
             val context = LocalContext.current
             Column(horizontalAlignment = Alignment.CenterHorizontally,
@@ -1601,13 +1601,13 @@ fun ClimaTab(weather: ClimaData, isCarregando: Boolean) {
                 Text("\uD83C\uDF24\uFE0F", fontSize = 56.sp)
                 Text("Clima Unavailable", fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface)
-                Text("Could not get your location. Please grant location permission.",
+                Text("Não foi possível obter sua localização. Conceda a permissão de localização.",
                     fontSize = 13.sp, textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 19.sp)
                 Button(onClick = {
                     try { context.startActivity(android.content.Intent(android.provider.Configurações.ACTION_APPLICATION_DETAILS_SETTINGS,
                         android.net.Uri.fromParts("package", context.packageName, null))) } catch (_: Exception) {}
-                }) { Text("Open Configurações") }
+                }) { Text("Abrir configurações") }
             }
         }
         return
@@ -1657,7 +1657,7 @@ fun ClimaTab(weather: ClimaData, isCarregando: Boolean) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text("\uD83E\uDDE0", fontSize = 16.sp)
-                        Text("WEATHER INSIGHT", fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                        Text("DESTAQUE DO CLIMA", fontSize = 10.sp, fontWeight = FontWeight.Bold,
                             letterSpacing = 1.sp, color = MaterialTheme.colorScheme.primary)
                     }
                     Text(wInsight, fontSize = 13.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurface)
@@ -1711,8 +1711,8 @@ fun ClimaGrid(weather: ClimaData) {
         GridItem("Vento",        "${weather.windSpeed.toInt()} km/h", "\uD83D\uDCA8"),
         GridItem("Chuva Chance", "${weather.rainChance}%",            "\uD83C\uDF27"),
         GridItem("Índice UV",    uvLabel(weather.uvIndex),            "\u2600\uFE0F"),
-        GridItem("Visibility",  "${weather.visibility.toInt()} km",  "\uD83D\uDC41\uFE0F"),
-        GridItem("Feels Like",  "${weather.feelsLike.toInt()}\u00b0C", "\uD83C\uDF21\uFE0F")
+        GridItem("Visibilidade",  "${weather.visibility.toInt()} km",  "\uD83D\uDC41\uFE0F"),
+        GridItem("Sensação térmica",  "${weather.feelsLike.toInt()}\u00b0C", "\uD83C\uDF21\uFE0F")
     )
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         items.chunked(2).forEachIndexed { rowIdx, row ->
@@ -1751,23 +1751,23 @@ fun uvLabel(uv: Int) = when {
 // ─── TAB 3: NEWS ──────────────────────────────────────────────────────
 @Composable
 fun NotíciasTab(news: List<NotíciasArticle>, isCarregando: Boolean, isNeo: Boolean = false, onAtualizar: () -> Unit = {}, onArticleClick: (String) -> Unit) {
-    if (isCarregando && news.isEmpty()) { WarmCarregandoScreen("Carregando latest news..."); return }
+    if (isCarregando && news.isEmpty()) { WarmCarregandoScreen("Carregando as últimas notícias..."); return }
     val isError = news.isNotEmpty() && news.all { it.category == "System" }
     if (news.isEmpty() || isError) {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(horizontal = 32.dp)) {
                 Text("\uD83D\uDCE1", fontSize = 48.sp)
-                Text(if (isError) "Notícias unavailable" else "No news loaded yet",
+                Text(if (isError) "Notícias indisponíveis" else "Nenhuma notícia carregada ainda",
                     fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-                Text(if (isError) "Check your internet connection and try again."
-                     else "Tap below to load today's top stories.",
+                Text(if (isError) "Verifique sua conexão com a internet e tente novamente."
+                     else "Toque abaixo para carregar as principais notícias de hoje.",
                     fontSize = 14.sp, textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 20.sp)
                 Spacer(Modifier.height(4.dp))
                 Button(onAtualizar) {
                     Icon(Icons.Default.Atualizar, null, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(6.dp)); Text("Retry")
+                    Spacer(Modifier.width(6.dp)); Text("Tentar novamente")
                 }
             }
         }
@@ -1815,7 +1815,7 @@ fun NotíciasTab(news: List<NotíciasArticle>, isCarregando: Boolean, isNeo: Boo
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically) {
                             Text("\uD83D\uDCF0", fontSize = 14.sp)
-                            Text("TODAY'S DIGEST", fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                            Text("RESUMO DE HOJE", fontSize = 10.sp, fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp, color = Color(0xFF2196F3))
                         }
                         Text(headlines, fontSize = 12.sp, lineHeight = 18.sp,
@@ -1881,7 +1881,7 @@ fun NotíciasTab(news: List<NotíciasArticle>, isCarregando: Boolean, isNeo: Boo
                 item {
                     Column(Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 4.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("🔥 TRENDING TODAY", fontSize = 9.sp, fontWeight = FontWeight.ExtraBold,
+                        Text("🔥 EM ALTA HOJE", fontSize = 9.sp, fontWeight = FontWeight.ExtraBold,
                             letterSpacing = 1.5.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.55f),
                             modifier = Modifier.padding(horizontal = 4.dp))
@@ -1999,7 +1999,7 @@ fun NotíciasTab(news: List<NotíciasArticle>, isCarregando: Boolean, isNeo: Boo
                             fontFamily = if (isNeo) FontFamily.Monospace else FontFamily.Default
                         ),
                         decorationBox = { inner ->
-                            Box { if (searchQuery.isEmpty()) Text("Ask about today's news...", fontSize = 13.sp,
+                            Box { if (searchQuery.isEmpty()) Text("Pergunte sobre as notícias de hoje...", fontSize = 13.sp,
                                 color = if (isNeo) neoMuted else MaterialTheme.colorScheme.onSurfaceVariant); inner() }
                         },
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Pesquisar),
@@ -2268,8 +2268,8 @@ fun buildClimaInsight(weather: com.kakao.taxi.data.model.ClimaData): String {
     when {
         "fog" in cond || "mist" in cond -> sb.append(" 🌫️ Foggy conditions — drive slowly and use fog lights.")
         "snow" in cond || "blizzard" in cond -> sb.append(" ❄️ Snowy — roads may be slippery.")
-        "thunder" in cond || "storm" in cond -> sb.append(" ⚡ Storm warning — avoid open areas.")
-        "clear" in cond && hour in 18..22 -> sb.append(" 🌠 Clear night ahead — great for stargazing!")
+        "thunder" in cond || "storm" in cond -> sb.append(" ⚡ Alerta de tempestade — evite áreas abertas.")
+        "clear" in cond && hour in 18..22 -> sb.append(" 🌠 A noite promete céu limpo — ótima para observar as estrelas!")
     }
 
     // Fetch a relevant Wikipedia fact if clear
@@ -2333,7 +2333,7 @@ fun buildHealthTip(steps: Int, sleepH: Float, water: Int, hour: Int): String {
 
     // Time-of-day tip
     val timeTip = when (hour) {
-        in 6..8   -> "🌅 Manhã tip: 10 min of sunlight exposure boosts serotonin and sets your sleep cycle."
+        in 6..8   -> "🌅 Dica da manhã: 10 minutos de luz solar ajudam a regular o sono e o humor."
         in 12..13 -> "🥗 Lunch time: a protein-rich meal sustains energy better than high-carb options."
         in 14..16 -> "😪 Tarde slump? A 20-min nap or brisk walk beats coffee for sustained alertness."
         in 21..23 -> "📵 Vento-down hour: dim lights and avoid screens 30 min before bed for better sleep quality."
@@ -2382,7 +2382,7 @@ fun extractTrendingTopics(news: List<com.kakao.taxi.data.model.NotíciasArticle>
 
 // ─── RULE-BASED NEWS AI (works offline, no quota) ─────────────────────
 fun ruleBasedNotíciasAnswer(query: String, news: List<NotíciasArticle>): String {
-    if (news.isEmpty()) return "No articles loaded yet. Pull to refresh."
+    if (news.isEmpty()) return "Nenhum artigo carregado ainda. Puxe para atualizar."
     val q = query.lowercase().trim()
     if (q.contains("how many") || q.startsWith("count")) {
         val cats = news.groupBy { it.category }
@@ -2997,7 +2997,7 @@ fun SaúdeTab() {
                 //  "Enable airplane"    → +2: airplane = maximum isolation = very strong sleep intent
                 //  "Turn off mobile data"→ +2: data off = no distraction = strong intent
                 //  "Turn off WiFi"      → +1: mild isolation signal
-                //  "Enable dark mode"   → +1: bedtime routine signal
+                //  "Ativar modo escuro"   → +1: bedtime routine signal
                 //  "Mute all"           → +1: mild silence signal
                 //  None / no behaviors  → +1: user trusts screen-off alone
                 //
@@ -3124,7 +3124,7 @@ fun SaúdeTab() {
         }
         val stepSubtitle = when (sleepOnboardStep) {
             0    -> "How many hours of night sleep do you aim for?"
-            1    -> "How long is your ideal daytime nap?"
+            1    -> "Qual é a duração ideal da sua soneca durante o dia?"
             else -> "What do you usually do before sleeping?"
         }
 
@@ -3294,11 +3294,11 @@ fun SaúdeTab() {
                         }
                     }
                 }, shape = RoundedCornerShape(12.dp)) {
-                    Text(when (sleepOnboardStep) { 0, 1 -> "Next →"; else -> "Done ✓" })
+                    Text(when (sleepOnboardStep) { 0, 1 -> "Próximo →"; else -> "Concluído ✓" })
                 }
             },
             dismissButton = if (sleepOnboardStep > 0) {
-                { TextButton(onClick = { sleepOnboardStep-- }) { Text("← Back") } }
+                { TextButton(onClick = { sleepOnboardStep-- }) { Text("← Voltar") } }
             } else null
         )
     }
@@ -3318,7 +3318,7 @@ fun SaúdeTab() {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("\uD83D\uDC9A", fontSize = 20.sp)
                 Column {
-                    Text("TODAY'S VITALS", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold,
+                    Text("DADOS DE SAÚDE DE HOJE", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold,
                         letterSpacing = 1.sp, color = MaterialTheme.colorScheme.primary)
                     Text(SimpleDateFormat("EEEE, MMM d", Locale.getDefault()).format(Date()),
                         fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f))
@@ -3347,7 +3347,7 @@ fun SaúdeTab() {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text("\uD83D\uDCA1", fontSize = 14.sp)
-                        Text("TODAY'S INSIGHT", fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                        Text("DESTAQUE DE HOJE", fontSize = 10.sp, fontWeight = FontWeight.Bold,
                             letterSpacing = 1.sp, color = Color(0xFF4CAF50))
                     }
                     insights.forEach { Text(it, fontSize = 13.sp, lineHeight = 19.sp,
@@ -3554,7 +3554,7 @@ fun SaúdeTab() {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("$waterCups / 8", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.onSurface)
-                            Text("glasses today", fontSize = 11.sp,
+                            Text("copos de água hoje", fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f))
                         }
 
@@ -3603,7 +3603,7 @@ fun SaúdeTab() {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically) {
                                 Text("\uD83D\uDCCA", fontSize = 15.sp)
-                                Text("APP USAGE TODAY", fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                                Text("USO DE APLICATIVOS HOJE", fontSize = 11.sp, fontWeight = FontWeight.Bold,
                                     letterSpacing = 0.8.sp, color = MaterialTheme.colorScheme.primary)
                             }
                             val totalH = totalScreenMin / 60; val totalM = totalScreenMin % 60
@@ -3638,7 +3638,7 @@ fun SaúdeTab() {
                         verticalAlignment = Alignment.CenterVertically) {
                         Text("💡", fontSize = 22.sp)
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                            Text("TODAY'S HEALTH TIP", fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                            Text("DICA DE SAÚDE DE HOJE", fontSize = 10.sp, fontWeight = FontWeight.Bold,
                                 letterSpacing = 0.8.sp, color = MaterialTheme.colorScheme.primary)
                             if (tipCarregando)
                                 LinearProgressIndicator(Modifier.fillMaxWidth().height(2.dp).clip(RoundedCornerShape(50)),
@@ -3662,9 +3662,9 @@ fun SaúdeTab() {
             }
             val hcStatusText = when {
                 hcRepo.needsUpdate    -> "Needs update"
-                !hcAvailable          -> "Not available on device"
+                !hcAvailable          -> "Não disponível neste dispositivo"
                 hcSnap != null        -> "Connected ✓"
-                hcEverGranted         -> "Connected ✓ — refreshing…"
+                hcEverGranted         -> "Conectado ✓ — atualizando…"
                 else                  -> "Not connected"
             }
 
