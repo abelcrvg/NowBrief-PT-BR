@@ -13,6 +13,9 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import com.kakao.taxi.data.model.NewsArticle
+import org.json.JSONArray
+import org.json.JSONObject
 
 const val DATA_STORE_NAME = "pixel_pulse_preferences"
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = DATA_STORE_NAME)
@@ -109,6 +112,8 @@ class DataStoreRepository(private val dataStore: DataStore<Preferences>) {
 
         // Stealth mode — app icon hidden from launcher, accessed via QS tile
         val KEY_STEALTH_MODE = booleanPreferencesKey("key_stealth_mode")
+        val KEY_FAVORITE_ARTICLES = stringPreferencesKey("key_favorite_articles_json")
+        val KEY_PRODUCTIVITY_TASKS = stringPreferencesKey("key_productivity_tasks_json")
     }
 
     val isLiveUpdateEnabled: Flow<Boolean> = dataStore.data
@@ -523,6 +528,54 @@ class DataStoreRepository(private val dataStore: DataStore<Preferences>) {
             val city = prefs[KEY_LAST_CITY]                   ?: return null
             Triple(lat, lon, city)
         } catch (e: Exception) { null }
+    }
+
+    /** Favorites remain on this device; no login or cloud sync is required. */
+    val favoriteArticles: Flow<List<NewsArticle>> = dataStore.data.map { prefs ->
+        try {
+            val json = JSONArray(prefs[KEY_FAVORITE_ARTICLES].orEmpty())
+            (0 until json.length()).mapNotNull { index ->
+                val item = json.optJSONObject(index) ?: return@mapNotNull null
+                val url = item.optString("url").takeIf { it.startsWith("http") } ?: return@mapNotNull null
+                NewsArticle(
+                    title = item.optString("title", "Notícia salva"),
+                    description = item.optString("description"),
+                    source = item.optString("source", "Fonte"),
+                    url = url,
+                    publishedAt = item.optString("publishedAt"),
+                    category = item.optString("category", "Geral"),
+                    imageUrl = item.optString("imageUrl").takeIf { it.isNotBlank() }
+                )
+            }
+        } catch (_: Exception) { emptyList() }
+    }
+
+    suspend fun toggleFavoriteArticle(article: NewsArticle) {
+        dataStore.edit { prefs ->
+            val existing = try { JSONArray(prefs[KEY_FAVORITE_ARTICLES].orEmpty()) } catch (_: Exception) { JSONArray() }
+            val items = (0 until existing.length()).mapNotNull { existing.optJSONObject(it) }
+            val wasSaved = items.any { it.optString("url") == article.url }
+            val result = JSONArray()
+            items.filter { it.optString("url") != article.url }.forEach { result.put(it) }
+            if (!wasSaved) result.put(JSONObject().apply {
+                put("title", article.title)
+                put("description", article.description)
+                put("source", article.source)
+                put("url", article.url)
+                put("publishedAt", article.publishedAt)
+                put("category", article.category)
+                put("imageUrl", article.imageUrl ?: "")
+            })
+            prefs[KEY_FAVORITE_ARTICLES] = result.toString()
+        }
+    }
+
+    val productivityTasksJson: Flow<String> = dataStore.data.map { prefs ->
+        prefs[KEY_PRODUCTIVITY_TASKS].orEmpty()
+    }
+
+    suspend fun saveProductivityTasksJson(value: String) {
+        dataStore.edit { prefs -> prefs[KEY_PRODUCTIVITY_TASKS] = value }
     }
 
     /** Water cups — auto-resets if saved date != today */

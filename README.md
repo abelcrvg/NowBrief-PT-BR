@@ -8,6 +8,17 @@ Versão comunitária em português brasileiro do aplicativo **NowBrief**, basead
 - Mensagens de erro, dicas, textos de orientação e conteúdo gerado pela IA.
 - Prompt do resumo diário configurado para produzir respostas em português brasileiro.
 
+## Funcionalidades ampliadas
+
+- **Notícias:** feed por categorias, leitura do artigo e pesquisa de contexto.
+- **Favoritos:** salve matérias para ler depois; os dados ficam no dispositivo.
+- **Assistente IA:** respostas em português usando pesquisa aberta e contexto das notícias, sem assinatura obrigatória.
+- **Clima:** previsão e indicadores meteorológicos integrados.
+- **Agenda:** tarefas locais com marcação de conclusão e persistência.
+- **Saúde:** passos, sono, hidratação e dados de Health Connect/sensores, conforme permissões.
+- **Personalização:** tema escuro e visual Neo, mantendo a identidade Liquid Glass.
+- **Sem conta obrigatória:** favoritos e tarefas ficam locais; não há login exigido.
+
 ## Compilação e APK
 O projeto usa Kotlin, Jetpack Compose e Gradle. O GitHub Actions executa `assembleDebug` a cada atualização e disponibiliza o APK de depuração como artefato da execução quando a compilação passa. Acompanhe em [Actions](https://github.com/abelcrvg/NowBrief-PT-BR/actions).
 

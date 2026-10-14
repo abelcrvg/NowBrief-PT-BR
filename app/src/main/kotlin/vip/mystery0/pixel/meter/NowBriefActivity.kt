@@ -233,9 +233,12 @@ fun LiquidGlassPill(
 fun NowBriefScreen(repo: NowBriefRepository, networkRepo: com.kakao.taxi.data.repository.NetworkRepository) {
     val state   by repo.briefState.collectAsState()
     val scope   = rememberCoroutineScope()
-    val pager   = rememberPagerState(pageCount = { 4 })
+    val pager   = rememberPagerState(pageCount = { 5 })
     val context = LocalContext.current
-    val tabs    = listOf("Summary", "Weather", "News", "Vitals")
+    val tabs    = listOf("Resumo", "Clima", "Notícias", "Saúde", "Mais")
+    val dataStoreRepo = remember { DataStoreRepository(context.dataStore) }
+    val favoriteArticles by dataStoreRepo.favoriteArticles.collectAsState(initial = emptyList())
+    val favoriteUrls = remember(favoriteArticles) { favoriteArticles.map { it.url }.toSet() }
     val isNeo        by networkRepo.isNeoThemeEnabled.collectAsState()
     var articleUrl   by remember { mutableStateOf<String?>(null) }
     var articleTitle by remember { mutableStateOf("") }
@@ -354,20 +357,34 @@ fun NowBriefScreen(repo: NowBriefRepository, networkRepo: com.kakao.taxi.data.re
                     when (page) {
                         0 -> SummaryTab(state) { scope.launch { repo.refreshAll() } }
                         1 -> WeatherTab(state.weather, state.isLoading)
-                        2 -> NewsTab(state.news, state.isLoading, isNeo,
+                        2 -> NewsTab(
+                            state.news, state.isLoading, isNeo,
+                            favoriteUrls = favoriteUrls,
+                            onFavoriteToggle = { article -> scope.launch { dataStoreRepo.toggleFavoriteArticle(article) } },
                             onRefresh = { scope.launch { repo.refreshAll() } },
                             onArticleClick = { url ->
                                 val art = state.news.firstOrNull { it.url == url }
-                                articleTitle = art?.title ?: "Article"
+                                    ?: favoriteArticles.firstOrNull { it.url == url }
+                                articleTitle = art?.title ?: "Notícia"
                                 articleUrl = url
                             }
                         )
                         3 -> VitalsTab()
+                        4 -> MoreToolsTab(
+                            state = state,
+                            networkRepo = networkRepo,
+                            onArticleClick = { url ->
+                                val art = favoriteArticles.firstOrNull { it.url == url }
+                                    ?: state.news.firstOrNull { it.url == url }
+                                articleTitle = art?.title ?: "Notícia salva"
+                                articleUrl = url
+                            }
+                        )
                     }
                 }
                 // Real upstream Kyant0/AndroidLiquidGlass nav bar (verbatim component).
                 val navTabIcons = remember {
-                    listOf(Icons.Filled.Home, Icons.Filled.WbSunny, Icons.Filled.Article, Icons.Filled.Favorite)
+                    listOf(Icons.Filled.Home, Icons.Filled.WbSunny, Icons.Filled.Article, Icons.Filled.Favorite, Icons.Filled.Apps)
                 }
                 val navContentColor = if (isSystemInDarkTheme()) Color.White else Color.Black
                 LiquidBottomTabs(
@@ -1750,7 +1767,15 @@ fun uvLabel(uv: Int) = when {
 
 // ─── TAB 3: NEWS ──────────────────────────────────────────────────────
 @Composable
-fun NewsTab(news: List<NewsArticle>, isLoading: Boolean, isNeo: Boolean = false, onRefresh: () -> Unit = {}, onArticleClick: (String) -> Unit) {
+fun NewsTab(
+    news: List<NewsArticle>,
+    isLoading: Boolean,
+    isNeo: Boolean = false,
+    favoriteUrls: Set<String> = emptySet(),
+    onFavoriteToggle: (NewsArticle) -> Unit = {},
+    onRefresh: () -> Unit = {},
+    onArticleClick: (String) -> Unit
+) {
     if (isLoading && news.isEmpty()) { WarmLoadingScreen("Loading latest news..."); return }
     val isError = news.isNotEmpty() && news.all { it.category == "System" }
     if (news.isEmpty() || isError) {
@@ -1963,7 +1988,13 @@ fun NewsTab(news: List<NewsArticle>, isLoading: Boolean, isNeo: Boolean = false,
                             .background(Brush.horizontalGradient(listOf(Color.Transparent, neoBlue.copy(0.45f), Color.Transparent))))
                         Column(Modifier.padding(horizontal = 18.dp, vertical = 4.dp)) {
                             articles.forEachIndexed { idx, article ->
-                                NewsCard(article, isNeo) { onArticleClick(article.url) }
+                                NewsCard(
+                                    article = article,
+                                    isNeo = isNeo,
+                                    isFavorite = article.url in favoriteUrls,
+                                    onFavoriteClick = { onFavoriteToggle(article) },
+                                    onClick = { onArticleClick(article.url) }
+                                )
                                 if (idx < articles.lastIndex)
                                     HorizontalDivider(color = if (isNeo) neoBlue.copy(0.1f) else MaterialTheme.colorScheme.outline.copy(0.25f), thickness = 0.5.dp)
                             }
@@ -2029,7 +2060,13 @@ fun NewsTab(news: List<NewsArticle>, isLoading: Boolean, isNeo: Boolean = false,
 
 // ─── UPGRADED NEWS CARD ───────────────────────────────────────────────
 @Composable
-fun NewsCard(article: NewsArticle, isNeo: Boolean = false, onClick: () -> Unit) {
+fun NewsCard(
+    article: NewsArticle,
+    isNeo: Boolean = false,
+    isFavorite: Boolean = false,
+    onFavoriteClick: () -> Unit = {},
+    onClick: () -> Unit
+) {
     val neoBlue  = Color(0xFF22D3EE)
     val neoText  = Color(0xFFE2E8F0)
     val neoMuted = Color(0xFF94A3B8)
@@ -2056,6 +2093,17 @@ fun NewsCard(article: NewsArticle, isNeo: Boolean = false, onClick: () -> Unit) 
                     Text(article.publishedAt, fontSize = 10.sp, color = if (isNeo) neoMuted else MaterialTheme.colorScheme.onSurfaceVariant.copy(0.7f))
                 }
             }
+        }
+        // Save article for later — stored on-device.
+        Box(Modifier.size(30.dp).clip(CircleShape)
+            .background(if (isFavorite) Color(0xFFFFC857).copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            .clickable { onFavoriteClick() }, Alignment.Center) {
+            Icon(
+                if (isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
+                contentDescription = if (isFavorite) "Remover dos favoritos" else "Salvar nos favoritos",
+                tint = if (isFavorite) Color(0xFFFFC857) else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp)
+            )
         }
         // Arrow btn
         Box(Modifier.size(30.dp).clip(CircleShape)
