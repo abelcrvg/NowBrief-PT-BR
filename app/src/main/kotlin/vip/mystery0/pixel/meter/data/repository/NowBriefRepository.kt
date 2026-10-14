@@ -278,9 +278,9 @@ class NowBriefRepository(
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
         val greetings = when {
             hour < 5  -> listOf("Still up? Rest well 🌙", "Burning the midnight oil 🌙", "Late night, take care 🌙")
-            hour < 12 -> listOf("Bom dia", "Rise and shine ☀️", "Morning! Let's make it great", "Bom dia! Ready for today?")
-            hour < 17 -> listOf("Boa tarde", "Hope your day's going well", "Afternoon! Keep the momentum 🌤️")
-            hour < 21 -> listOf("Boa noite", "Evening! Time to unwind 🌅", "Boa noite! How was your day?")
+            hour < 12 -> listOf("Bom dia", "Acorde com energia ☀️", "Bom dia! Vamos fazer valer a pena", "Bom dia! Pronto para hoje?")
+            hour < 17 -> listOf("Boa tarde", "Espero que seu dia esteja indo bem", "Boa tarde! Continue nesse ritmo 🌤️")
+            hour < 21 -> listOf("Boa noite", "Boa noite! Hora de relaxar 🌅", "Boa noite! Como foi seu dia?")
             else      -> listOf("Time to relax 🌙", "Boa noite! Rest up 🌙", "Winding down for the night 🌙")
         }
         return greetings.random()
@@ -304,7 +304,7 @@ class NowBriefRepository(
             Log.e(TAG, "refreshAll error", e)
             _briefState.value = _briefState.value.copy(
                 isLoading = false,
-                error     = e.message ?: "Failed to load data"
+                error     = e.message ?: "Falha ao carregar os dados"
             )
         }
     }
@@ -748,7 +748,7 @@ Respond ONLY with valid JSON (no markdown):
                 val cat = if (rawCat != null && rawCat.length() > 0)
                     rawCat.getString(0).replaceFirstChar { it.uppercaseChar() } else "General"
                 list.add(NewsArticle(
-                    title       = item.optString("title", "No title"),
+                    title       = item.optString("title", "Sem título"),
                     description = item.optString("description", "").takeIf { it.isNotBlank() }
                                   ?: item.optString("content", "").take(200),
                     source      = item.optString("source_id", "newsdata.io").replaceFirstChar { it.uppercaseChar() },
@@ -1002,7 +1002,7 @@ Valid categories: World Technology Business Sports Science Health Entertainment 
         } catch (e: Exception) {
             Log.e(TAG, "fetchGeminiNews error: ${e.message}", e)
             buildOfflineNews(
-                Locale.getDefault().displayCountry.ifBlank { "your region" },
+                Locale.getDefault().displayCountry.ifBlank { "sua região" },
                 now
             )
         }
@@ -1012,20 +1012,20 @@ Valid categories: World Technology Business Sports Science Health Entertainment 
     private fun buildOfflineNews(country: String, time: String): List<NewsArticle> {
         val cats = listOf("World","Technology","Business","Health","Science","Sports","Entertainment","Politics")
         return listOf(
-            NewsArticle("News unavailable — tap ↻ to retry",
-                "Could not connect to news servers. Check your internet connection and try refreshing.",
+            NewsArticle("Notícias indisponíveis — toque em ↻ para tentar novamente",
+                "Não foi possível conectar aos servidores de notícias. Verifique sua conexão e tente atualizar.",
                 "NowBrief", "", time, "System"),
             NewsArticle("Tip: Make sure mobile data or Wi-Fi is active",
-                "NowBrief needs a network connection to fetch news for $country.",
+                "O NowBrief precisa de conexão com a internet para buscar notícias sobre $country.",
                 "NowBrief", "", time, "System")
         )
     }
 
     /** Last-resort static news when both newsdata.io and Gemini fail */
     private fun hardcodedFallbackNews(time: String): List<NewsArticle> = listOf(
-        NewsArticle("Could not load news", "Check your internet connection and tap ↻ to retry.",
+        NewsArticle("Não foi possível carregar as notícias", "Verifique sua conexão com a internet e toque em ↻ para tentar novamente.",
             "NowBrief", "", time, "System"),
-        NewsArticle("Tip: Grant all permissions", "Make sure NowBrief has network access and background activity allowed.",
+        NewsArticle("Dica: conceda todas as permissões", "Verifique se o NowBrief tem acesso à internet e permissão para funcionar em segundo plano.",
             "NowBrief", "", time, "System")
     )
 
@@ -1052,12 +1052,12 @@ $newsTitles
 Respond ONLY with a valid JSON object (no markdown, no backticks). Fill EVERY field:
 {
   "greeting": "Warm $timeOfDay greeting 2-4 words e.g. 'Bom dia'",
-  "newsSummary": "Exactly 2 sentences summarizing the 2 most important headlines above. Name the specific events.",
-  "daySummary": "Exactly 2 warm helpful sentences for this $timeOfDay based on weather and time.",
-  "weatherSummary": "One natural sentence about today's weather.",
-  "weatherAdvice": "One practical sentence: what to wear or carry today.",
+  "newsSummary": "Exatamente 2 frases em português brasileiro resumindo as 2 manchetes mais importantes acima. Cite os acontecimentos específicos.",
+  "daySummary": "Exatamente 2 frases acolhedoras e úteis em português brasileiro para este período do dia, considerando o clima e o horário.",
+  "weatherSummary": "Uma frase natural em português brasileiro sobre o clima de hoje.",
+  "weatherAdvice": "Uma frase prática em português brasileiro dizendo o que vestir ou levar hoje.",
   "quote": "Inspiring quote — Attribution",
-  "tips": ["Weather-relevant tip", "Health or focus tip", "Evening or time-of-day tip"],
+  "tips": ["Dica relacionada ao clima", "Dica de saúde ou concentração", "Dica para a noite ou para o período do dia"],
   "musicMood": "one word",
   "musicTitle": "Real song title fitting $timeOfDay mood",
   "musicArtist": "Artist name",
@@ -1100,32 +1100,32 @@ Respond ONLY with a valid JSON object (no markdown, no backticks). Fill EVERY fi
             val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
             val fallbackMusic = when {
                 hour < 6  -> MusicRecommendation("Clair de Lune", "Claude Debussy", "Peaceful · Calm", reason = "Perfect for late nights")
-                hour < 12 -> MusicRecommendation("Here Comes the Sun", "The Beatles", "Uplifting · Morning", reason = "A sunny start to the day")
-                hour < 17 -> MusicRecommendation("Lovely Day", "Bill Withers", "Happy · Bright", reason = "Keep your afternoon bright")
-                hour < 21 -> MusicRecommendation("Golden Hour", "JVKE", "Warm · Evening", reason = "Wind down with warm vibes")
+                hour < 12 -> MusicRecommendation("Here Comes the Sun", "The Beatles", "Energizante · Manhã", reason = "Um começo de dia ensolarado")
+                hour < 17 -> MusicRecommendation("Lovely Day", "Bill Withers", "Alegre · Radiante", reason = "Deixe sua tarde mais leve")
+                hour < 21 -> MusicRecommendation("Golden Hour", "JVKE", "Aconchegante · Noite", reason = "Relaxe com uma atmosfera acolhedora")
                 else      -> MusicRecommendation("Night Owl", "Galimatias", "Mellow · Night", reason = "Ease into a restful night")
             }
             val weatherLine = "It's ${weather.temperature.toInt()}°C and ${weather.condition.lowercase()} in ${weather.cityName}."
             val adviceLine = when {
-                weather.rainChance > 50 -> "Carry an umbrella — rain is likely today."
+                weather.rainChance > 50 -> "Leve um guarda-chuva — há chance de chuva hoje."
                 weather.uvIndex >= 7    -> "Apply sunscreen before heading out."
-                weather.temperature > 35 -> "Stay hydrated and avoid peak afternoon heat."
+                weather.temperature > 35 -> "Beba água e evite o calor mais intenso da tarde."
                 weather.temperature < 15 -> "Layer up — it's chilly outside."
-                else                    -> "Great conditions today — enjoy!"
+                else                    -> "O clima está ótimo hoje — aproveite!"
             }
             val newsSummaryFallback = if (news.isNotEmpty())
                 "Today's top story: ${news[0].title}." +
                 if (news.size > 1) " Also: ${news[1].title.take(80)}." else ""
-            else "Check the News tab for today's top stories."
+            else "Confira a aba Notícias para ver os destaques de hoje."
 
             NowBriefSummary(
                 greeting       = getContextualGreeting(),
                 weatherSummary = weatherLine,
                 weatherAdvice  = adviceLine,
-                daySummary     = "Here's your brief for today. Stay on top of the weather and take care of yourself.",
+                daySummary     = "Aqui está seu resumo de hoje. Acompanhe a previsão do tempo e cuide de você.",
                 newsSummary    = newsSummaryFallback,
                 quote          = getNextQuote(),
-                tips           = listOf("Start your day with a glass of water.", "Take short breaks to recharge.", "Focus on one task at a time."),
+                tips           = listOf("Comece o dia com um copo de água.", "Faça pequenas pausas para recarregar as energias.", "Concentre-se em uma tarefa de cada vez."),
                 tip            = "Stay hydrated and take breaks.",
                 musicMood      = "calm",
                 music          = fallbackMusic
@@ -1202,7 +1202,7 @@ Respond ONLY with a valid JSON object (no markdown, no backticks). Fill EVERY fi
     }
 
     private fun wmoToCondition(code: Int): Pair<String, String> = when (code) {
-        0        -> "Clear Sky"     to "☀️"
+        0        -> "Céu limpo"     to "☀️"
         1, 2     -> "Partly Cloudy" to "⛅"
         3        -> "Overcast"      to "☁️"
         45, 48   -> "Foggy"         to "🌫️"
