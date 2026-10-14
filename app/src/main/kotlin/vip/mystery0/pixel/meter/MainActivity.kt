@@ -64,7 +64,7 @@ class MainActivity : ComponentActivity() {
         val isServiceRunning by viewModel.isServiceRunning.collectAsState()
         val isNotificationEnabled by viewModel.isNotificationEnabled.collectAsState()
         val isHideFromRecents by viewModel.isHideFromRecents.collectAsState(initial = false)
-        val serviceError by viewModel.serviceIniciarError.collectAsState()
+        val serviceError by viewModel.serviceStartError.collectAsState()
         val speedUnit by viewModel.speedUnit.collectAsState()
         val compactMode by viewModel.isCompactSpeedTextEnabled.collectAsState(initial = false)
         val isOledTheme by viewModel.isOledThemeEnabled.collectAsState(initial = false)
@@ -216,7 +216,7 @@ class MainActivity : ComponentActivity() {
                             view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                             startActivity(Intent(context, SettingsActivity::class.java))
                         }) {
-                            Icon(Icons.Default.Configurações, contentDescription = "Configurações")
+                            Icon(Icons.Default.Settings, contentDescription = "Settings")
                         }
                     }
                 )
@@ -250,8 +250,8 @@ class MainActivity : ComponentActivity() {
                                 )
                                 Spacer(Modifier.width(8.dp))
                                 Text(
-                                    if (isBriefRunning) "NowBrief ativo — notificação ao vivo ATIVADA"
-                                    else "NowBrief inativo",
+                                    if (isBriefRunning) "NowBrief Active — Live Notification ON"
+                                    else "NowBrief Inactive",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = if (isBriefRunning) MaterialTheme.colorScheme.onPrimaryContainer
                                     else MaterialTheme.colorScheme.onSurfaceVariant
@@ -260,9 +260,9 @@ class MainActivity : ComponentActivity() {
                             Spacer(Modifier.height(8.dp))
                             Text(
                                 if (isBriefRunning)
-                                    "Exibe saudações com IA, clima e notícias na Samsung Now Bar"
+                                    "Shows AI-powered greetings, weather and news in Samsung Now Bar"
                                 else
-                                    "Toque em Iniciar → permita a execução em segundo plano → toque em Iniciar novamente",
+                                    "Tap Start → allow background permission → tap Start again",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (isBriefRunning) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                                 else MaterialTheme.colorScheme.onSurfaceVariant
@@ -288,7 +288,7 @@ class MainActivity : ComponentActivity() {
                                     },
                                     enabled = !isBriefRunning,
                                     modifier = Modifier.weight(1f)
-                                ) { Text("Iniciar") }
+                                ) { Text("Start") }
                                 Button(
                                     onClick = {
                                         view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
@@ -298,7 +298,7 @@ class MainActivity : ComponentActivity() {
                                     enabled = isBriefRunning,
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                                     modifier = Modifier.weight(1f)
-                                ) { Text("Parar") }
+                                ) { Text("Stop") }
                             }
                             Spacer(Modifier.height(8.dp))
                             OutlinedButton(
@@ -310,7 +310,7 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(Modifier.width(6.dp))
-                                Text("Abrir NowBrief")
+                                Text("Open NowBrief")
                             }
                         }
                     }
@@ -323,7 +323,7 @@ class MainActivity : ComponentActivity() {
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
                             modifier = Modifier.fillMaxWidth(),
                             onClick = {
-                                startActivity(Intent(Configurações.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
                                     data = "package:${context.packageName}".toUri()
                                 })
                             }
@@ -365,8 +365,8 @@ class MainActivity : ComponentActivity() {
                                 )
                                 Spacer(Modifier.width(8.dp))
                                 Text(
-                                    if (isServiceRunning) "Medidor NowBar Active — Speed Live"
-                                    else "Medidor NowBar Inactive",
+                                    if (isServiceRunning) "NowBar Meter Active — Speed Live"
+                                    else "NowBar Meter Inactive",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = if (isServiceRunning) MaterialTheme.colorScheme.onPrimaryContainer
                                     else MaterialTheme.colorScheme.onSurfaceVariant
@@ -389,7 +389,7 @@ class MainActivity : ComponentActivity() {
                                     },
                                     enabled = !isServiceRunning,
                                     modifier = Modifier.weight(1f)
-                                ) { Text("Iniciar Medidor NowBar") }
+                                ) { Text("Start NowBar Meter") }
                                 Button(
                                     onClick = {
                                         view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
@@ -419,13 +419,13 @@ class MainActivity : ComponentActivity() {
                                     horizontalArrangement = Arrangement.End) {
                                     Button(onClick = {
                                         serviceError?.let { (_, action) ->
-                                            if (action == Configurações.ACTION_APP_NOTIFICATION_SETTINGS) {
+                                            if (action == Settings.ACTION_APP_NOTIFICATION_SETTINGS) {
                                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                                                     notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                                                 else {
                                                     startActivity(Intent(action).apply {
                                                         flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                                        putExtra(Configurações.EXTRA_APP_PACKAGE, context.packageName)
+                                                        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
                                                     })
                                                 }
                                             } else {
