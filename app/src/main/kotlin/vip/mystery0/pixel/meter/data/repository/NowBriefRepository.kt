@@ -278,10 +278,10 @@ class NowBriefRepository(
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
         val greetings = when {
             hour < 5  -> listOf("Still up? Rest well 🌙", "Burning the midnight oil 🌙", "Late night, take care 🌙")
-            hour < 12 -> listOf("Good morning", "Rise and shine ☀️", "Morning! Let's make it great", "Good morning! Ready for today?")
-            hour < 17 -> listOf("Good afternoon", "Hope your day's going well", "Afternoon! Keep the momentum 🌤️")
-            hour < 21 -> listOf("Good evening", "Evening! Time to unwind 🌅", "Good evening! How was your day?")
-            else      -> listOf("Time to relax 🌙", "Good night! Rest up 🌙", "Winding down for the night 🌙")
+            hour < 12 -> listOf("Bom dia", "Rise and shine ☀️", "Morning! Let's make it great", "Bom dia! Ready for today?")
+            hour < 17 -> listOf("Boa tarde", "Hope your day's going well", "Afternoon! Keep the momentum 🌤️")
+            hour < 21 -> listOf("Boa noite", "Evening! Time to unwind 🌅", "Boa noite! How was your day?")
+            else      -> listOf("Time to relax 🌙", "Boa noite! Rest up 🌙", "Winding down for the night 🌙")
         }
         return greetings.random()
     }
@@ -912,7 +912,7 @@ Respond ONLY with valid JSON (no markdown):
         ))
     }
 
-    /** World News API — best quality, real local news, supports 50+ countries
+    /** World News API — best quality, real notícias locais, supports 50+ countries
      *  Kept for backwards-compat reference; main logic now in fetchWorldNewsLocal/Global */
     private suspend fun fetchWorldNewsAPI(): List<NewsArticle> = fetchWorldNewsLocal()
 
@@ -1051,7 +1051,7 @@ $newsTitles
 
 Respond ONLY with a valid JSON object (no markdown, no backticks). Fill EVERY field:
 {
-  "greeting": "Warm $timeOfDay greeting 2-4 words e.g. 'Good morning'",
+  "greeting": "Warm $timeOfDay greeting 2-4 words e.g. 'Bom dia'",
   "newsSummary": "Exactly 2 sentences summarizing the 2 most important headlines above. Name the specific events.",
   "daySummary": "Exactly 2 warm helpful sentences for this $timeOfDay based on weather and time.",
   "weatherSummary": "One natural sentence about today's weather.",
